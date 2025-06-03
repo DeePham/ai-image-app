@@ -1,7 +1,7 @@
 import { Color } from "@/utils/Color";
 import { getImageDimensions } from "@/utils/helper";
+import { saveImageToHistory } from "@/utils/storage";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import { Stack } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -112,27 +112,28 @@ export default function Index() {
 
       const fileReaderInstance = new FileReader();
       fileReaderInstance.readAsDataURL(blob);
-      fileReaderInstance.onload = () => {
-        const base64Data = fileReaderInstance.result;
+      fileReaderInstance.onload = async () => {
+        const base64Data = fileReaderInstance.result as string;
         setImageUrl(base64Data);
         setIsLoading(false);
         console.log("Image URL: ", base64Data);
+
+        // Save to history
+        await saveImageToHistory({
+          imageUrl: base64Data,
+          prompt,
+          model,
+          aspectRatio,
+        });
       };
     } catch (error) {
       console.error(error);
+      setIsLoading(false);
     }
   };
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: "AI Image Generator",
-          headerStyle: { backgroundColor: Color.background },
-          headerTitleStyle: { color: Color.text },
-          headerTitleAlign: "center",
-        }}
-      />
       <View style={styles.container}>
         <View style={{ height: 150 }}>
           <TextInput
