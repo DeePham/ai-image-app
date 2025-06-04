@@ -88,8 +88,7 @@ export default function Index() {
     setIsLoading(true);
     const MODEL_URL = `https://router.huggingface.co/hf-inference/models/${model}`;
     const { width, height } = getImageDimensions(aspectRatio);
-    console.log("width: ", width);
-    console.log("height: ", height);
+    console.log("RUNNING!!!")
     try {
       const response = await fetch(MODEL_URL, {
         headers: {
@@ -116,8 +115,7 @@ export default function Index() {
         const base64Data = fileReaderInstance.result as string;
         setImageUrl(base64Data);
         setIsLoading(false);
-        console.log("Image URL: ", base64Data);
-
+        // console.log("Image URL: ", base64Data);
         // Save to history
         await saveImageToHistory({
           imageUrl: base64Data,

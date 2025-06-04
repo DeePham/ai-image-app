@@ -9,7 +9,7 @@ export interface GeneratedImage {
   createdAt: string;
 }
 
-const STORAGE_KEY = "generated_images";
+const STORAGE_KEY = process.env.EXPO_PUBLIC_STORAGE_KEY;
 
 export const saveImageToHistory = async (
   image: Omit<GeneratedImage, "id" | "createdAt">
@@ -23,7 +23,7 @@ export const saveImageToHistory = async (
     };
 
     const updatedImages = [newImage, ...existingImages];
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedImages));
+    await AsyncStorage.setItem(STORAGE_KEY!, JSON.stringify(updatedImages));
     return newImage;
   } catch (error) {
     console.error("Error saving image to history:", error);
@@ -32,7 +32,7 @@ export const saveImageToHistory = async (
 
 export const getImageHistory = async (): Promise<GeneratedImage[]> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEY);
+    const data = await AsyncStorage.getItem(STORAGE_KEY!);
     return data ? JSON.parse(data) : [];
   } catch (error) {
     console.error("Error getting image history:", error);
@@ -44,7 +44,7 @@ export const deleteImageFromHistory = async (id: string) => {
   try {
     const existingImages = await getImageHistory();
     const filteredImages = existingImages.filter((image) => image.id !== id);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filteredImages));
+    await AsyncStorage.setItem(STORAGE_KEY!, JSON.stringify(filteredImages));
   } catch (error) {
     console.error("Error deleting image from history:", error);
   }
@@ -52,7 +52,7 @@ export const deleteImageFromHistory = async (id: string) => {
 
 export const clearImageHistory = async () => {
   try {
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    await AsyncStorage.removeItem(STORAGE_KEY!);
   } catch (error) {
     console.error("Error clearing image history:", error);
   }
