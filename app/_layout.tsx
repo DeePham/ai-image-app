@@ -18,6 +18,7 @@ export default function RootLayout() {
         headerTitleStyle: {
           color: Color.text,
         },
+        headerTitleAlign: "center",
       }}
     >
       <Tabs.Screen
