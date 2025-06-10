@@ -4,7 +4,10 @@ import { AIService } from "@/services/aiService";
 import { AuthService } from "@/services/authService";
 import { ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 import { router } from "expo-router";
+import moment from "moment";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -67,6 +70,7 @@ const aspectRatioData = [
   { label: "Portrait (9:16)", value: "9/16", icon: "mobile" },
   { label: "Wide (21:9)", value: "21/9", icon: "desktop" },
 ];
+
 
 export default function Index() {
   const [prompt, setPrompt] = useState<string>("");
@@ -147,6 +151,28 @@ export default function Index() {
       Alert.alert("Error", "Failed to generate image. Please try again.");
     }
   };
+
+  const handleDownload = async() =>{
+    const base64Code = imageUrl.split("data:image/jpeg;base64,")[1];
+    const date = moment().format("YYYYMMDDhhmmss");
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need media library permissions to save images!');
+        return;
+      }
+
+      const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+      await FileSystem.writeAsStringAsync(fileName, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      await MediaLibrary.saveToLibraryAsync(fileName);
+      alert("Downloaded Successfully!");
+    } catch (error) {
+      console.log(error);
+      alert("Failed to download image");
+    }
+  }
 
   const handleShare = async () => {
     if (!imageUrl) return;
@@ -295,7 +321,7 @@ export default function Index() {
               <View style={styles.imageActions}>
                 <TouchableOpacity
                   style={styles.actionButton}
-                  onPress={() => {}}
+                  onPress={handleDownload}
                 >
                   <FontAwesome5
                     name="download"
@@ -532,3 +558,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
