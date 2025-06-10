@@ -1,16 +1,14 @@
 import AuthGuard from "@/components/AuthGuard";
-import { getCurrentUser } from "@/utils/auth";
-import { Color } from "@/utils/Color";
-import { getImageDimensions } from "@/utils/helper";
-import { downloadImage, saveImageToHistory } from "@/utils/storage";
+import { MainColor } from "@/constants/MainColor";
+import { AIService } from "@/services/aiService";
+import { AuthService } from "@/services/authService";
+import { ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   Image,
   ScrollView,
   Share,
@@ -70,7 +68,7 @@ const aspectRatioData = [
   { label: "Wide (21:9)", value: "21/9", icon: "desktop" },
 ];
 
-function IndexContent() {
+export default function Index() {
   const [prompt, setPrompt] = useState<string>("");
   const [model, setModel] = useState<string>(
     "black-forest-labs/FLUX.1-schnell"
@@ -85,12 +83,11 @@ function IndexContent() {
   }, []);
 
   const checkUser = async () => {
-    const currentUser = await getCurrentUser();
+    const currentUser = await AuthService.getCurrentUser();
     setUser(currentUser);
   };
 
   const generatePrompt = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const selectedPrompt =
       examplePrompts[Math.floor(Math.random() * examplePrompts.length)];
     setPrompt(selectedPrompt);
@@ -118,98 +115,36 @@ function IndexContent() {
     }
 
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    const MODEL_URL = `https://router.huggingface.co/hf-inference/models/${model}`;
-    const { width, height } = getImageDimensions(aspectRatio);
 
     try {
-      const response = await fetch(MODEL_URL, {
-        headers: {
-          Authorization: `Bearer ${process.env.EXPO_PUBLIC_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: { width, height },
-        }),
+      const base64Data = await AIService.generateImage({
+        prompt,
+        model,
+        aspectRatio,
       });
 
-      if (!response.ok) {
-        throw new Error((await response.json()).error);
+      setImageUrl(base64Data);
+      setIsLoading(false);
+
+      try {
+        await ImageService.saveToHistory({
+          imageUrl: base64Data,
+          prompt,
+          model,
+          aspectRatio,
+        });
+      } catch (saveError) {
+        console.error("Failed to save image to history:", saveError);
+        Alert.alert(
+          "Warning",
+          "Image generated successfully but couldn't be saved to history.",
+          [{ text: "OK" }]
+        );
       }
-
-      const blob = await response.blob();
-      const fileReaderInstance = new FileReader();
-      fileReaderInstance.readAsDataURL(blob);
-      fileReaderInstance.onload = async () => {
-        const base64Data = fileReaderInstance.result as string;
-        setImageUrl(base64Data);
-        setIsLoading(false);
-
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-        // Save to history with base64
-        try {
-          console.log("Attempting to save image to history...");
-          await saveImageToHistory({
-            imageUrl: base64Data,
-            prompt,
-            model,
-            aspectRatio,
-          });
-          console.log("Image saved successfully!");
-        } catch (saveError) {
-          console.error("Failed to save image to history:", saveError);
-          Alert.alert(
-            "Warning",
-            "Image generated successfully but couldn't be saved to history.",
-            [{ text: "OK" }]
-          );
-        }
-      };
     } catch (error) {
       console.error(error);
       setIsLoading(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Error", "Failed to generate image. Please try again.");
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!imageUrl) return;
-
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-      // Show loading state
-      Alert.alert("Downloading", "Saving image to your device...");
-
-      const fileName = `ai-image-${Date.now()}`;
-      await downloadImage(imageUrl, fileName);
-
-      Alert.alert("Success", "Image saved to your gallery!");
-    } catch (error: any) {
-      console.error("Download error:", error);
-
-      if (error.message?.includes("Permission")) {
-        Alert.alert(
-          "Permission Required",
-          "Please allow access to your photo library to save images.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: () => {
-                // You can add logic to open app settings here if needed
-              },
-            },
-          ]
-        );
-      } else {
-        Alert.alert("Error", "Failed to save image. Please try again.");
-      }
     }
   };
 
@@ -217,7 +152,6 @@ function IndexContent() {
     if (!imageUrl) return;
 
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await Share.share({
         message: `Check out this AI-generated image: ${prompt}`,
         url: imageUrl,
@@ -228,169 +162,172 @@ function IndexContent() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>AI Image Generator</Text>
-          <Text style={styles.headerSubtitle}>
-            Transform your imagination into stunning visuals
-          </Text>
-        </View>
-
-        {/* Prompt Input */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Describe Your Vision</Text>
-          <View style={styles.promptContainer}>
-            <TextInput
-              placeholder="Describe your imagination in detail..."
-              placeholderTextColor={Color.placeholder}
-              style={styles.inputField}
-              numberOfLines={4}
-              multiline={true}
-              value={prompt}
-              onChangeText={setPrompt}
-            />
-            <TouchableOpacity style={styles.ideaBtn} onPress={generatePrompt}>
-              <FontAwesome5 name="dice" size={20} color={Color.white} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Model Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>AI Model</Text>
-          <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
-            data={modelData}
-            maxHeight={300}
-            labelField="label"
-            valueField="value"
-            placeholder="Select AI model"
-            value={model}
-            onChange={(item) => setModel(item.value)}
-            renderItem={(item) => (
-              <View style={styles.dropdownItem}>
-                <Text style={styles.dropdownItemText}>{item.label}</Text>
-                {item.premium && (
-                  <View style={styles.premiumBadge}>
-                    <Text style={styles.premiumText}>Premium</Text>
-                  </View>
-                )}
-              </View>
-            )}
-          />
-        </View>
-
-        {/* Aspect Ratio Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Aspect Ratio</Text>
-          <View style={styles.aspectRatioContainer}>
-            {aspectRatioData.map((item) => (
-              <TouchableOpacity
-                key={item.value}
-                style={[
-                  styles.aspectRatioItem,
-                  aspectRatio === item.value && styles.aspectRatioItemSelected,
-                ]}
-                onPress={() => setAspectRatio(item.value)}
-              >
-                <FontAwesome5
-                  name={item.icon as any}
-                  size={20}
-                  color={
-                    aspectRatio === item.value
-                      ? Color.white
-                      : Color.textSecondary
-                  }
-                />
-                <Text
-                  style={[
-                    styles.aspectRatioText,
-                    aspectRatio === item.value &&
-                      styles.aspectRatioTextSelected,
-                  ]}
-                >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Generate Button */}
-        <TouchableOpacity
-          style={[
-            styles.generateButton,
-            isLoading && styles.generateButtonDisabled,
-          ]}
-          onPress={generateImage}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color={Color.white} />
-          ) : (
-            <FontAwesome5 name="magic" size={18} color={Color.white} />
-          )}
-          <Text style={styles.generateButtonText}>
-            {isLoading ? "Generating..." : "Generate Image"}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Loading State */}
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Color.primary} />
-            <Text style={styles.loadingText}>Creating your masterpiece...</Text>
-          </View>
-        )}
-
-        {/* Generated Image */}
-        {imageUrl && !isLoading && (
-          <View style={styles.imageSection}>
-            <Text style={styles.sectionTitle}>Your Creation</Text>
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUrl }} style={styles.image} />
-            </View>
-            <View style={styles.imageActions}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleDownload}
-              >
-                <FontAwesome5 name="download" size={20} color={Color.primary} />
-                <Text style={styles.actionButtonText}>Download</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleShare}
-              >
-                <FontAwesome5 name="share" size={20} color={Color.primary} />
-                <Text style={styles.actionButtonText}>Share</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
-    </ScrollView>
-  );
-}
-
-export default function Index() {
-  return (
     <AuthGuard>
-      <IndexContent />
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>AI Image Generator</Text>
+            <Text style={styles.headerSubtitle}>
+              Transform your imagination into stunning visuals
+            </Text>
+          </View>
+
+          {/* Prompt Input */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Describe Your Vision</Text>
+            <View style={styles.promptContainer}>
+              <TextInput
+                placeholder="Describe your imagination in detail..."
+                placeholderTextColor={MainColor.placeholder}
+                style={styles.inputField}
+                numberOfLines={4}
+                multiline={true}
+                value={prompt}
+                onChangeText={setPrompt}
+              />
+              <TouchableOpacity style={styles.ideaBtn} onPress={generatePrompt}>
+                <FontAwesome5 name="dice" size={20} color={MainColor.white} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Model Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>AI Model</Text>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              data={modelData}
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder="Select AI model"
+              value={model}
+              onChange={(item) => setModel(item.value)}
+              renderItem={(item) => (
+                <View style={styles.dropdownItem}>
+                  <Text style={styles.dropdownItemText}>{item.label}</Text>
+                  {item.premium && (
+                    <View style={styles.premiumBadge}>
+                      <Text style={styles.premiumText}>Premium</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+
+          {/* Aspect Ratio Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Aspect Ratio</Text>
+            <View style={styles.aspectRatioContainer}>
+              {aspectRatioData.map((item) => (
+                <TouchableOpacity
+                  key={item.value}
+                  style={[
+                    styles.aspectRatioItem,
+                    aspectRatio === item.value &&
+                      styles.aspectRatioItemSelected,
+                  ]}
+                  onPress={() => setAspectRatio(item.value)}
+                >
+                  <FontAwesome5
+                    name={item.icon as any}
+                    size={20}
+                    color={
+                      aspectRatio === item.value
+                        ? MainColor.white
+                        : MainColor.textSecondary
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.aspectRatioText,
+                      aspectRatio === item.value &&
+                        styles.aspectRatioTextSelected,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Generate Button */}
+          <TouchableOpacity
+            style={[
+              styles.generateButton,
+              isLoading && styles.generateButtonDisabled,
+            ]}
+            onPress={generateImage}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color={MainColor.white} />
+            ) : (
+              <FontAwesome5 name="magic" size={18} color={MainColor.white} />
+            )}
+            <Text style={styles.generateButtonText}>
+              {isLoading ? "Generating..." : "Generate Image"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Loading State */}
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={MainColor.primary} />
+              <Text style={styles.loadingText}>
+                Creating your masterpiece...
+              </Text>
+            </View>
+          )}
+
+          {/* Generated Image */}
+          {imageUrl && !isLoading && (
+            <View style={styles.imageSection}>
+              <Text style={styles.sectionTitle}>Your Creation</Text>
+              <View style={styles.imageContainer}>
+                <Image source={{ uri: imageUrl }} style={styles.image} />
+              </View>
+              <View style={styles.imageActions}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => {}}
+                >
+                  <FontAwesome5
+                    name="download"
+                    size={20}
+                    color={MainColor.primary}
+                  />
+                  <Text style={styles.actionButtonText}>Download</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleShare}
+                >
+                  <FontAwesome5
+                    name="share"
+                    size={20}
+                    color={MainColor.primary}
+                  />
+                  <Text style={styles.actionButtonText}>Share</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </ScrollView>
     </AuthGuard>
   );
 }
 
-const windowWidth = Dimensions.get("window").width;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.background,
+    backgroundColor: MainColor.background,
   },
   content: {
     padding: 20,
@@ -403,12 +340,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: Color.text,
+    color: MainColor.text,
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: Color.textSecondary,
+    color: MainColor.textSecondary,
     textAlign: "center",
   },
   section: {
@@ -417,70 +354,71 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: Color.text,
+    color: MainColor.text,
     marginBottom: 12,
   },
   promptContainer: {
     position: "relative",
   },
   inputField: {
-    backgroundColor: Color.surface,
+    backgroundColor: MainColor.surface,
     padding: 20,
     borderRadius: 16,
-    borderColor: Color.primary,
+    borderColor: MainColor.primary,
     borderWidth: 1,
     fontSize: 16,
-    color: Color.text,
+    color: MainColor.text,
     textAlignVertical: "top",
     minHeight: 120,
   },
   ideaBtn: {
-    backgroundColor: Color.primary,
+    backgroundColor: MainColor.primary,
     padding: 12,
     borderRadius: 25,
     position: "absolute",
     bottom: 15,
     right: 15,
-    shadowColor: Color.primary,
+    shadowColor: MainColor.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   dropdown: {
-    backgroundColor: Color.surface,
+    backgroundColor: MainColor.surface,
     borderRadius: 12,
-    borderColor: Color.primary,
+    borderColor: MainColor.primary,
     borderWidth: 1,
     padding: 16,
   },
   placeholderStyle: {
     fontSize: 16,
-    color: Color.placeholder,
+    color: MainColor.placeholder,
   },
   selectedTextStyle: {
     fontSize: 16,
-    color: Color.text,
+    color: MainColor.text,
   },
   dropdownItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    backgroundColor: MainColor.surface,
     padding: 12,
   },
   dropdownItemText: {
     fontSize: 16,
-    color: Color.text,
+    color: MainColor.text,
   },
   premiumBadge: {
-    backgroundColor: Color.accent,
+    backgroundColor: MainColor.accent,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
   },
   premiumText: {
     fontSize: 10,
-    color: Color.white,
+    color: MainColor.white,
     fontWeight: "600",
   },
   aspectRatioContainer: {
@@ -491,35 +429,35 @@ const styles = StyleSheet.create({
   aspectRatioItem: {
     flex: 1,
     minWidth: "45%",
-    backgroundColor: Color.surface,
+    backgroundColor: MainColor.surface,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Color.backgroundSecondary,
+    borderColor: MainColor.backgroundSecondary,
     alignItems: "center",
     gap: 8,
   },
   aspectRatioItemSelected: {
-    backgroundColor: Color.primary,
-    borderColor: Color.primary,
+    backgroundColor: MainColor.primary,
+    borderColor: MainColor.primary,
   },
   aspectRatioText: {
     fontSize: 12,
-    color: Color.textSecondary,
+    color: MainColor.textSecondary,
     textAlign: "center",
   },
   aspectRatioTextSelected: {
-    color: Color.white,
+    color: MainColor.white,
   },
   generateButton: {
-    backgroundColor: Color.primary,
+    backgroundColor: MainColor.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     padding: 18,
     borderRadius: 16,
     gap: 10,
-    shadowColor: Color.primary,
+    shadowColor: MainColor.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -529,7 +467,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   generateButtonText: {
-    color: Color.white,
+    color: MainColor.white,
     fontSize: 18,
     fontWeight: "600",
   },
@@ -538,7 +476,7 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   loadingText: {
-    color: Color.textSecondary,
+    color: MainColor.textSecondary,
     fontSize: 16,
     marginTop: 16,
   },
@@ -549,8 +487,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: Color.primary,
-    shadowColor: Color.black,
+    borderColor: MainColor.primary,
+    shadowColor: MainColor.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -569,28 +507,28 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Color.surface,
+    backgroundColor: MainColor.surface,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 25,
     gap: 8,
     borderWidth: 1,
-    borderColor: Color.primary,
+    borderColor: MainColor.primary,
   },
   actionButtonText: {
-    color: Color.primary,
+    color: MainColor.primary,
     fontSize: 14,
     fontWeight: "600",
   },
   testButton: {
-    backgroundColor: Color.warning,
+    backgroundColor: MainColor.warning,
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 10,
   },
   testButtonText: {
-    color: Color.black,
+    color: MainColor.black,
     fontWeight: "600",
   },
 });

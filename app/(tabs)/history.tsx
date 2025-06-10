@@ -1,11 +1,6 @@
 import AuthGuard from "@/components/AuthGuard";
-import { Color } from "@/utils/Color";
-import {
-  clearImageHistory,
-  deleteImageFromHistory,
-  GeneratedImage,
-  getImageHistory,
-} from "@/utils/storage";
+import { MainColor } from "@/constants/MainColor";
+import { GeneratedImage, ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
@@ -31,7 +26,7 @@ function HistoryContent() {
   const loadImages = async () => {
     setLoading(true);
     try {
-      const history = await getImageHistory();
+      const history = await ImageService.getHistory();
       setImages(history);
     } catch (error) {
       console.error("Error loading images:", error);
@@ -57,7 +52,7 @@ function HistoryContent() {
         style: "destructive",
         onPress: async () => {
           try {
-            await deleteImageFromHistory(id);
+            await ImageService.deleteFromHistory(id);
             loadImages();
           } catch (error) {
             Alert.alert("Error", "Failed to delete image");
@@ -81,7 +76,7 @@ function HistoryContent() {
           style: "destructive",
           onPress: async () => {
             try {
-              await clearImageHistory();
+              await ImageService.clearHistory();
               loadImages();
             } catch (error) {
               Alert.alert("Error", "Failed to clear history");
@@ -99,7 +94,7 @@ function HistoryContent() {
         style={styles.deleteBtn}
         onPress={() => handleDeleteImage(item.id)}
       >
-        <FontAwesome5 name="trash" size={16} color={Color.white} />
+        <FontAwesome5 name="trash" size={16} color={MainColor.white} />
       </TouchableOpacity>
       <View style={styles.imageInfo}>
         <Text style={styles.promptText} numberOfLines={2}>
@@ -118,7 +113,7 @@ function HistoryContent() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Color.primary} />
+        <ActivityIndicator size="large" color={MainColor.primary} />
         <Text style={styles.loadingText}>Loading your images...</Text>
       </View>
     );
@@ -136,7 +131,7 @@ function HistoryContent() {
 
       {images.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <FontAwesome5 name="image" size={64} color={Color.placeholder} />
+          <FontAwesome5 name="image" size={64} color={MainColor.placeholder} />
           <Text style={styles.emptyText}>No images generated yet</Text>
           <Text style={styles.emptySubText}>
             Generate your first AI image to see it here
@@ -167,7 +162,7 @@ export default function History() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.background,
+    backgroundColor: MainColor.background,
   },
   header: {
     flexDirection: "row",
@@ -179,10 +174,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: Color.text,
+    color: MainColor.text,
   },
   clearButton: {
-    color: Color.accent,
+    color: MainColor.accent,
     fontSize: 16,
     fontWeight: "500",
   },
@@ -192,9 +187,9 @@ const styles = StyleSheet.create({
   imageItem: {
     flex: 1,
     margin: 10,
-    backgroundColor: Color.dark,
+    backgroundColor: MainColor.background,
     borderRadius: 10,
-    borderColor: Color.accent,
+    borderColor: MainColor.accent,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
@@ -219,17 +214,17 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   promptText: {
-    color: Color.text,
+    color: MainColor.text,
     fontSize: 12,
     marginBottom: 4,
   },
   metaText: {
-    color: Color.placeholder,
+    color: MainColor.placeholder,
     fontSize: 10,
     marginBottom: 2,
   },
   dateText: {
-    color: Color.placeholder,
+    color: MainColor.placeholder,
     fontSize: 10,
   },
   emptyContainer: {
@@ -239,14 +234,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyText: {
-    color: Color.text,
+    color: MainColor.text,
     fontSize: 18,
     fontWeight: "500",
     marginTop: 16,
     textAlign: "center",
   },
   emptySubText: {
-    color: Color.placeholder,
+    color: MainColor.placeholder,
     fontSize: 14,
     marginTop: 8,
     textAlign: "center",
@@ -255,10 +250,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Color.background,
+    backgroundColor: MainColor.background,
   },
   loadingText: {
-    color: Color.textSecondary,
+    color: MainColor.textSecondary,
     fontSize: 16,
     marginTop: 16,
   },

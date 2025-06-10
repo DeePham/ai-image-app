@@ -1,5 +1,5 @@
-import { getCurrentUser } from "@/utils/auth";
-import { Color } from "@/utils/Color";
+import { MainColor } from "@/constants/MainColor";
+import { AuthService } from "@/services/authService";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -18,7 +18,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   const checkAuthStatus = async () => {
     try {
-      const user = await getCurrentUser();
+      const user = await AuthService.getCurrentUser();
       if (user) {
         setIsAuthenticated(true);
       } else {
@@ -35,7 +35,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Color.primary} />
+        <ActivityIndicator size="large" color={MainColor.primary} />
       </View>
     );
   }
@@ -52,6 +52,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Color.background,
+    backgroundColor: MainColor.background,
   },
 });

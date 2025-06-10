@@ -1,5 +1,5 @@
-import { getCurrentUser, signOut } from "@/utils/auth";
-import { Color } from "@/utils/Color";
+import { MainColor } from "@/constants/MainColor";
+import { AuthService } from "@/services/authService";
 import { supabase } from "@/utils/supabase";
 import { Stack, router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -25,19 +25,19 @@ export default function RootLayout() {
   }, []);
 
   const checkUser = async () => {
-    const currentUser = await getCurrentUser();
+    const currentUser = await AuthService.getCurrentUser();
     setUser(currentUser);
     setIsLoading(false);
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await AuthService.signOut();
     router.replace("/auth/login");
   };
 
   return (
     <>
-      <StatusBar backgroundColor={Color.background} translucent={false} />
+      <StatusBar backgroundColor={MainColor.background} translucent={false} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth/login" options={{ headerShown: false }} />

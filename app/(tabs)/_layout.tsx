@@ -1,5 +1,5 @@
-import { getCurrentUser, signOut } from "@/utils/auth";
-import { Color } from "@/utils/Color";
+import { MainColor } from "@/constants/MainColor";
+import { AuthService } from "@/services/authService";
 import { supabase } from "@/utils/supabase";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Tabs, router } from "expo-router";
@@ -11,10 +11,8 @@ export default function TabLayout() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
+    setIsLoading(true);
     checkUser();
-
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -26,33 +24,33 @@ export default function TabLayout() {
   }, []);
 
   const checkUser = async () => {
-    const currentUser = await getCurrentUser();
+    const currentUser = await AuthService.getCurrentUser();
     setUser(currentUser);
     setIsLoading(false);
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await AuthService.signOut();
     router.replace("/auth/login");
   };
 
   return (
     <>
-      <StatusBar backgroundColor={Color.background} translucent={false} />
+      <StatusBar backgroundColor={MainColor.background} translucent={false} />
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Color.primary,
-          tabBarInactiveTintColor: Color.placeholder,
+          tabBarActiveTintColor: MainColor.primary,
+          tabBarInactiveTintColor: MainColor.placeholder,
           tabBarStyle: {
-            backgroundColor: Color.background,
-            borderTopColor: Color.backgroundSecondary,
+            backgroundColor: MainColor.background,
+            borderTopColor: MainColor.backgroundSecondary,
             borderTopWidth: 1,
           },
           headerStyle: {
-            backgroundColor: Color.background,
+            backgroundColor: MainColor.background,
           },
           headerTitleStyle: {
-            color: Color.text,
+            color: MainColor.text,
             fontSize: 18,
             fontWeight: "600",
           },
@@ -75,7 +73,7 @@ export default function TabLayout() {
                   <FontAwesome5
                     name="sign-out-alt"
                     size={20}
-                    color={Color.textSecondary}
+                    color={MainColor.textSecondary}
                   />
                 </TouchableOpacity>
               ),
@@ -97,7 +95,7 @@ export default function TabLayout() {
                   <FontAwesome5
                     name="sign-out-alt"
                     size={20}
-                    color={Color.textSecondary}
+                    color={MainColor.textSecondary}
                   />
                 </TouchableOpacity>
               ),

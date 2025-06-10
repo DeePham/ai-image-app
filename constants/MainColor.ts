@@ -1,4 +1,4 @@
-export const Color = {
+export const MainColor = {
   // Primary colors - more vibrant and modern
   background: "#0F0F23", // Deep space blue
   backgroundSecondary: "#1A1A3A", // Lighter variant

@@ -1,5 +1,5 @@
-import { Color } from "@/utils/Color";
-import { signUp } from "@/utils/auth";
+import { MainColor } from "@/constants/MainColor";
+import { AuthService } from "@/services/authService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -40,7 +40,7 @@ export default function Register() {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password);
+    const { error } = await AuthService.signUp(email, password);
     setLoading(false);
 
     if (error) {
@@ -63,7 +63,11 @@ export default function Register() {
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <FontAwesome5 name="user-plus" size={32} color={Color.primary} />
+              <FontAwesome5
+                name="user-plus"
+                size={32}
+                color={MainColor.primary}
+              />
             </View>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>
@@ -76,13 +80,13 @@ export default function Register() {
               <FontAwesome5
                 name="envelope"
                 size={16}
-                color={Color.textSecondary}
+                color={MainColor.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor={Color.placeholder}
+                placeholderTextColor={MainColor.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -94,13 +98,13 @@ export default function Register() {
               <FontAwesome5
                 name="lock"
                 size={16}
-                color={Color.textSecondary}
+                color={MainColor.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={[styles.input, { paddingRight: 50 }]}
                 placeholder="Password"
-                placeholderTextColor={Color.placeholder}
+                placeholderTextColor={MainColor.placeholder}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -112,7 +116,7 @@ export default function Register() {
                 <FontAwesome5
                   name={showPassword ? "eye-slash" : "eye"}
                   size={16}
-                  color={Color.textSecondary}
+                  color={MainColor.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -121,13 +125,13 @@ export default function Register() {
               <FontAwesome5
                 name="lock"
                 size={16}
-                color={Color.textSecondary}
+                color={MainColor.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={[styles.input, { paddingRight: 50 }]}
                 placeholder="Confirm Password"
-                placeholderTextColor={Color.placeholder}
+                placeholderTextColor={MainColor.placeholder}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
@@ -139,7 +143,7 @@ export default function Register() {
                 <FontAwesome5
                   name={showConfirmPassword ? "eye-slash" : "eye"}
                   size={16}
-                  color={Color.textSecondary}
+                  color={MainColor.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -170,7 +174,7 @@ export default function Register() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.background,
+    backgroundColor: MainColor.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -189,7 +193,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Color.surface,
+    backgroundColor: MainColor.surface,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
@@ -197,12 +201,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: Color.text,
+    color: MainColor.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: Color.textSecondary,
+    color: MainColor.textSecondary,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -212,11 +216,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Color.surface,
+    backgroundColor: MainColor.surface,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Color.backgroundSecondary,
+    borderColor: MainColor.backgroundSecondary,
   },
   inputIcon: {
     marginLeft: 16,
@@ -225,7 +229,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 56,
-    color: Color.text,
+    color: MainColor.text,
     fontSize: 16,
     paddingRight: 16,
   },
@@ -235,7 +239,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   button: {
-    backgroundColor: Color.primary,
+    backgroundColor: MainColor.primary,
     height: 56,
     borderRadius: 12,
     justifyContent: "center",
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: Color.white,
+    color: MainColor.white,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -257,11 +261,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    color: Color.textSecondary,
+    color: MainColor.textSecondary,
     fontSize: 14,
   },
   linkText: {
-    color: Color.primary,
+    color: MainColor.primary,
     fontSize: 14,
     fontWeight: "600",
   },
