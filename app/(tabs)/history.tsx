@@ -1,3 +1,4 @@
+import AuthGuard from "@/components/AuthGuard";
 import { Color } from "@/utils/Color";
 import {
   clearImageHistory,
@@ -9,6 +10,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
@@ -22,12 +24,20 @@ import {
 const windowWidth = Dimensions.get("window").width;
 const imageWidth = (windowWidth - 60) / 2;
 
-export default function History() {
+function HistoryContent() {
   const [images, setImages] = useState<GeneratedImage[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const loadImages = async () => {
-    const history = await getImageHistory();
-    setImages(history);
+    setLoading(true);
+    try {
+      const history = await getImageHistory();
+      setImages(history);
+    } catch (error) {
+      console.error("Error loading images:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useFocusEffect(
@@ -46,8 +56,12 @@ export default function History() {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await deleteImageFromHistory(id);
-          loadImages();
+          try {
+            await deleteImageFromHistory(id);
+            loadImages();
+          } catch (error) {
+            Alert.alert("Error", "Failed to delete image");
+          }
         },
       },
     ]);
@@ -66,8 +80,12 @@ export default function History() {
           text: "Clear All",
           style: "destructive",
           onPress: async () => {
-            await clearImageHistory();
-            loadImages();
+            try {
+              await clearImageHistory();
+              loadImages();
+            } catch (error) {
+              Alert.alert("Error", "Failed to clear history");
+            }
           },
         },
       ]
@@ -96,6 +114,15 @@ export default function History() {
       </View>
     </View>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Color.primary} />
+        <Text style={styles.loadingText}>Loading your images...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -126,6 +153,14 @@ export default function History() {
         />
       )}
     </View>
+  );
+}
+
+export default function History() {
+  return (
+    <AuthGuard>
+      <HistoryContent />
+    </AuthGuard>
   );
 }
 
@@ -215,5 +250,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
     textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Color.background,
+  },
+  loadingText: {
+    color: Color.textSecondary,
+    fontSize: 16,
+    marginTop: 16,
   },
 });
