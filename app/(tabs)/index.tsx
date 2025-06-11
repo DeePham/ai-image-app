@@ -1,11 +1,10 @@
-import AuthGuard from "@/components/AuthGuard";
 import { MainColor } from "@/constants/MainColor";
 import { AIService } from "@/services/aiService";
 import { AuthService } from "@/services/authService";
 import { ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
@@ -34,6 +33,21 @@ const examplePrompts = [
   "A underwater palace with mermaids and colorful coral reefs",
   "A cozy coffee shop on a rainy day, warm and inviting atmosphere",
   "A phoenix rising from ashes with vibrant fire colors",
+  "A snowy village at night with glowing lanterns and festive decorations",
+  "A futuristic city in the clouds with flying cars and glowing towers",
+  "A peaceful Zen garden with falling cherry blossoms and koi fish pond",
+  "A witch's cottage hidden deep in an enchanted forest, moonlit scene",
+  "A retro diner in the 1950s with vintage neon signs and classic cars",
+  "A spaceship interior with sleek design and glowing control panels",
+  "A giant treehouse city connected with rope bridges and lanterns",
+  "A desert oasis at sunset with camels and palm trees, cinematic lighting",
+  "A fairytale castle floating above the clouds with sparkling waterfalls",
+  "A vibrant street market in Morocco with colorful textiles and spices",
+  "A jungle temple being reclaimed by nature, covered in vines and moss",
+  "A fantasy battlefield with knights, dragons, and magical storms",
+  "A glowing crystal cave with reflections on water and magical ambience",
+  "A medieval library guarded by stone golems and ancient scrolls",
+  "A tranquil mountain lake at dawn with mist and mirror-like water",
 ];
 
 const modelData = [
@@ -48,18 +62,8 @@ const modelData = [
     premium: false,
   },
   {
-    label: "Stable Diffusion 3.5L",
-    value: "stabilityai/stable-diffusion-3.5-large",
-    premium: true,
-  },
-  {
     label: "Stable Diffusion XL",
     value: "stabilityai/stable-diffusion-xl-base-1.0",
-    premium: false,
-  },
-  {
-    label: "Stable Diffusion v1.5",
-    value: "stable-diffusion-v1-5/stable-diffusion-v1-5",
     premium: false,
   },
 ];
@@ -70,7 +74,6 @@ const aspectRatioData = [
   { label: "Portrait (9:16)", value: "9/16", icon: "mobile" },
   { label: "Wide (21:9)", value: "21/9", icon: "desktop" },
 ];
-
 
 export default function Index() {
   const [prompt, setPrompt] = useState<string>("");
@@ -137,6 +140,7 @@ export default function Index() {
           model,
           aspectRatio,
         });
+        setPrompt("");
       } catch (saveError) {
         console.error("Failed to save image to history:", saveError);
         Alert.alert(
@@ -144,6 +148,7 @@ export default function Index() {
           "Image generated successfully but couldn't be saved to history.",
           [{ text: "OK" }]
         );
+        setPrompt("");
       }
     } catch (error) {
       console.error(error);
@@ -152,13 +157,13 @@ export default function Index() {
     }
   };
 
-  const handleDownload = async() =>{
+  const handleDownload = async () => {
     const base64Code = imageUrl.split("data:image/jpeg;base64,")[1];
     const date = moment().format("YYYYMMDDhhmmss");
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Sorry, we need media library permissions to save images!');
+      if (status !== "granted") {
+        alert("Sorry, we need media library permissions to save images!");
         return;
       }
 
@@ -172,7 +177,7 @@ export default function Index() {
       console.log(error);
       alert("Failed to download image");
     }
-  }
+  };
 
   const handleShare = async () => {
     if (!imageUrl) return;
@@ -188,165 +193,160 @@ export default function Index() {
   };
 
   return (
-    <AuthGuard>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>AI Image Generator</Text>
-            <Text style={styles.headerSubtitle}>
-              Transform your imagination into stunning visuals
-            </Text>
-          </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>AI Image Generator</Text>
+          <Text style={styles.headerSubtitle}>
+            Transform your imagination into stunning visuals
+          </Text>
+        </View>
 
-          {/* Prompt Input */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Describe Your Vision</Text>
-            <View style={styles.promptContainer}>
-              <TextInput
-                placeholder="Describe your imagination in detail..."
-                placeholderTextColor={MainColor.placeholder}
-                style={styles.inputField}
-                numberOfLines={4}
-                multiline={true}
-                value={prompt}
-                onChangeText={setPrompt}
-              />
-              <TouchableOpacity style={styles.ideaBtn} onPress={generatePrompt}>
-                <FontAwesome5 name="dice" size={20} color={MainColor.white} />
+        {/* Prompt Input */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Describe Your Vision</Text>
+          <View style={styles.promptContainer}>
+            <TextInput
+              placeholder="Describe your imagination in detail..."
+              placeholderTextColor={MainColor.placeholder}
+              style={styles.inputField}
+              numberOfLines={4}
+              multiline={true}
+              value={prompt}
+              onChangeText={setPrompt}
+            />
+            <TouchableOpacity style={styles.ideaBtn} onPress={generatePrompt}>
+              <FontAwesome5 name="dice" size={20} color={MainColor.white} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Model Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>AI Model</Text>
+          <Dropdown
+            style={styles.dropdown}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            data={modelData}
+            maxHeight={300}
+            labelField="label"
+            valueField="value"
+            placeholder="Select AI model"
+            value={model}
+            onChange={(item) => setModel(item.value)}
+            renderItem={(item) => (
+              <View style={styles.dropdownItem}>
+                <Text style={styles.dropdownItemText}>{item.label}</Text>
+                {item.premium && (
+                  <View style={styles.premiumBadge}>
+                    <Text style={styles.premiumText}>Premium</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          />
+        </View>
+
+        {/* Aspect Ratio Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Aspect Ratio</Text>
+          <View style={styles.aspectRatioContainer}>
+            {aspectRatioData.map((item) => (
+              <TouchableOpacity
+                key={item.value}
+                style={[
+                  styles.aspectRatioItem,
+                  aspectRatio === item.value && styles.aspectRatioItemSelected,
+                ]}
+                onPress={() => setAspectRatio(item.value)}
+              >
+                <FontAwesome5
+                  name={item.icon as any}
+                  size={20}
+                  color={
+                    aspectRatio === item.value
+                      ? MainColor.white
+                      : MainColor.textSecondary
+                  }
+                />
+                <Text
+                  style={[
+                    styles.aspectRatioText,
+                    aspectRatio === item.value &&
+                      styles.aspectRatioTextSelected,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Generate Button */}
+        <TouchableOpacity
+          style={[
+            styles.generateButton,
+            isLoading && styles.generateButtonDisabled,
+          ]}
+          onPress={generateImage}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color={MainColor.white} />
+          ) : (
+            <FontAwesome5 name="magic" size={18} color={MainColor.white} />
+          )}
+          <Text style={styles.generateButtonText}>
+            {isLoading ? "Generating..." : "Generate Image"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Loading State */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={MainColor.primary} />
+            <Text style={styles.loadingText}>Creating your masterpiece...</Text>
+          </View>
+        )}
+
+        {/* Generated Image */}
+        {imageUrl && !isLoading && (
+          <View style={styles.imageSection}>
+            <Text style={styles.sectionTitle}>Your Creation</Text>
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: imageUrl }} style={styles.image} />
+            </View>
+            <View style={styles.imageActions}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleDownload}
+              >
+                <FontAwesome5
+                  name="download"
+                  size={20}
+                  color={MainColor.primary}
+                />
+                <Text style={styles.actionButtonText}>Download</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleShare}
+              >
+                <FontAwesome5
+                  name="share"
+                  size={20}
+                  color={MainColor.primary}
+                />
+                <Text style={styles.actionButtonText}>Share</Text>
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Model Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>AI Model</Text>
-            <Dropdown
-              style={styles.dropdown}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              data={modelData}
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder="Select AI model"
-              value={model}
-              onChange={(item) => setModel(item.value)}
-              renderItem={(item) => (
-                <View style={styles.dropdownItem}>
-                  <Text style={styles.dropdownItemText}>{item.label}</Text>
-                  {item.premium && (
-                    <View style={styles.premiumBadge}>
-                      <Text style={styles.premiumText}>Premium</Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            />
-          </View>
-
-          {/* Aspect Ratio Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Aspect Ratio</Text>
-            <View style={styles.aspectRatioContainer}>
-              {aspectRatioData.map((item) => (
-                <TouchableOpacity
-                  key={item.value}
-                  style={[
-                    styles.aspectRatioItem,
-                    aspectRatio === item.value &&
-                      styles.aspectRatioItemSelected,
-                  ]}
-                  onPress={() => setAspectRatio(item.value)}
-                >
-                  <FontAwesome5
-                    name={item.icon as any}
-                    size={20}
-                    color={
-                      aspectRatio === item.value
-                        ? MainColor.white
-                        : MainColor.textSecondary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.aspectRatioText,
-                      aspectRatio === item.value &&
-                        styles.aspectRatioTextSelected,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Generate Button */}
-          <TouchableOpacity
-            style={[
-              styles.generateButton,
-              isLoading && styles.generateButtonDisabled,
-            ]}
-            onPress={generateImage}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color={MainColor.white} />
-            ) : (
-              <FontAwesome5 name="magic" size={18} color={MainColor.white} />
-            )}
-            <Text style={styles.generateButtonText}>
-              {isLoading ? "Generating..." : "Generate Image"}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Loading State */}
-          {isLoading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={MainColor.primary} />
-              <Text style={styles.loadingText}>
-                Creating your masterpiece...
-              </Text>
-            </View>
-          )}
-
-          {/* Generated Image */}
-          {imageUrl && !isLoading && (
-            <View style={styles.imageSection}>
-              <Text style={styles.sectionTitle}>Your Creation</Text>
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: imageUrl }} style={styles.image} />
-              </View>
-              <View style={styles.imageActions}>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={handleDownload}
-                >
-                  <FontAwesome5
-                    name="download"
-                    size={20}
-                    color={MainColor.primary}
-                  />
-                  <Text style={styles.actionButtonText}>Download</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={handleShare}
-                >
-                  <FontAwesome5
-                    name="share"
-                    size={20}
-                    color={MainColor.primary}
-                  />
-                  <Text style={styles.actionButtonText}>Share</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </AuthGuard>
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -558,4 +558,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

@@ -1,4 +1,3 @@
-import AuthGuard from "@/components/AuthGuard";
 import { MainColor } from "@/constants/MainColor";
 import { GeneratedImage, ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
@@ -19,7 +18,7 @@ import {
 const windowWidth = Dimensions.get("window").width;
 const imageWidth = (windowWidth - 60) / 2;
 
-function HistoryContent() {
+export default function History() {
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -148,14 +147,6 @@ function HistoryContent() {
         />
       )}
     </View>
-  );
-}
-
-export default function History() {
-  return (
-    <AuthGuard>
-      <HistoryContent />
-    </AuthGuard>
   );
 }
 

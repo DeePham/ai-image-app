@@ -11,7 +11,6 @@ export interface GeneratedImage {
 }
 
 export const ImageService = {
-  // Save image to Supabase database with base64
   async saveToHistory(
     image: Omit<GeneratedImage, "id" | "createdAt">
   ): Promise<GeneratedImage> {
@@ -60,7 +59,6 @@ export const ImageService = {
     }
   },
 
-  // Get user's image history
   async getHistory(): Promise<GeneratedImage[]> {
     try {
       console.log("Fetching images from database...");
@@ -105,7 +103,6 @@ export const ImageService = {
     }
   },
 
-  // Delete specific image
   async deleteFromHistory(id: string): Promise<void> {
     try {
       console.log("Deleting image from database:", id);
@@ -123,7 +120,6 @@ export const ImageService = {
     }
   },
 
-  // Clear all user's images
   async clearHistory(): Promise<void> {
     try {
       const {

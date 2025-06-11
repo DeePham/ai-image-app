@@ -1,3 +1,4 @@
+import AuthGuard from "@/components/AuthGuard";
 import { MainColor } from "@/constants/MainColor";
 import { AuthService } from "@/services/authService";
 import { supabase } from "@/utils/supabase";
@@ -35,7 +36,7 @@ export default function TabLayout() {
   };
 
   return (
-    <>
+    <AuthGuard>
       <StatusBar backgroundColor={MainColor.background} translucent={false} />
       <Tabs
         screenOptions={{
@@ -102,6 +103,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </>
+    </AuthGuard>
   );
 }
