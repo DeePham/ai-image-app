@@ -141,6 +141,12 @@ export default function Index() {
           aspectRatio,
         });
         setPrompt("");
+        Alert.alert(
+          "Success",
+          "Image generated successfully",
+          [{ text: "OK" }]
+        );
+        return;
       } catch (saveError) {
         console.error("Failed to save image to history:", saveError);
         Alert.alert(
