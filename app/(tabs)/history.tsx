@@ -2,6 +2,10 @@ import { MainColor } from "@/constants/MainColor";
 import { GeneratedImage, ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useFocusEffect } from "@react-navigation/native";
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import moment from "moment";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -86,15 +90,89 @@ export default function History() {
     );
   };
 
+  const handleDownload = async (imageUrl: string) => {
+    try {
+      const base64Code = imageUrl.split(",")[1];
+      if (!base64Code) {
+        alert("Invalid image data");
+        return;
+      }
+
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need media library permissions to save images!");
+        return;
+      }
+
+      const date = moment().format("YYYYMMDDhhmmss");
+      const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+      
+      await FileSystem.writeAsStringAsync(fileName, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      const asset = await MediaLibrary.createAssetAsync(fileName);
+      await MediaLibrary.createAlbumAsync("AI Images", asset, false);
+      Alert.alert("Success", "Image downloaded successfully!");
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Error", "Failed to download image");
+    }
+  };
+
+  const handleShare = async (imageUrl: string) => {
+    try {
+      const base64Code = imageUrl.split(",")[1];
+      if (!base64Code) {
+        alert("Invalid image data");
+        return;
+      }
+
+      const date = moment().format("YYYYMMDDhhmmss");
+      const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+      
+      await FileSystem.writeAsStringAsync(fileName, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileName, {
+          mimeType: 'image/jpeg',
+          dialogTitle: 'Share your AI-generated image',
+          UTI: 'public.jpeg'
+        });
+      } else {
+        alert("Sharing isn't available on your platform");
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Error", "Failed to share image");
+    }
+  };
+
   const renderImageItem = ({ item }: { item: GeneratedImage }) => (
     <View style={styles.imageItem}>
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => handleDeleteImage(item.id)}
-      >
-        <FontAwesome5 name="trash" size={16} color={MainColor.white} />
-      </TouchableOpacity>
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.downloadBtn]}
+          onPress={() => handleDownload(item.imageUrl)}
+        >
+          <FontAwesome5 name="download" size={16} color={MainColor.white} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.shareBtn]}
+          onPress={() => handleShare(item.imageUrl)}
+        >
+          <FontAwesome5 name="share" size={16} color={MainColor.white} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.deleteBtn]}
+          onPress={() => handleDeleteImage(item.id)}
+        >
+          <FontAwesome5 name="trash" size={16} color={MainColor.white} />
+        </TouchableOpacity>
+      </View>
       <View style={styles.imageInfo}>
         <Text style={styles.promptText} numberOfLines={2}>
           {item.prompt}
@@ -190,16 +268,28 @@ const styles = StyleSheet.create({
     objectFit: "cover",
     resizeMode: "cover",
   },
-  deleteBtn: {
+  actionButtons: {
     position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: "rgba(255, 0, 0, 0.7)",
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionBtn: {
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: "center",
     alignItems: "center",
+  },
+  downloadBtn: {
+    backgroundColor: "rgba(0, 122, 255, 0.7)",
+  },
+  shareBtn: {
+    backgroundColor: "rgba(0, 150, 0, 0.7)",
+  },
+  deleteBtn: {
+    backgroundColor: "rgba(255, 0, 0, 0.7)",
   },
   imageInfo: {
     padding: 12,
