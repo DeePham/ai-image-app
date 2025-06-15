@@ -6,6 +6,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
+import * as Sharing from "expo-sharing";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
 import {
@@ -13,12 +14,11 @@ import {
   Alert,
   Image,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
@@ -158,20 +158,33 @@ export default function Index() {
   };
 
   const handleDownload = async () => {
-    const base64Code = imageUrl.split("data:image/jpeg;base64,")[1];
-    const date = moment().format("YYYYMMDDhhmmss");
+    if (!imageUrl) {
+      alert("No image to download");
+      return;
+    }
+
     try {
+      const base64Code = imageUrl.split(",")[1];
+      if (!base64Code) {
+        alert("Invalid image data");
+        return;
+      }
+
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
         alert("Sorry, we need media library permissions to save images!");
         return;
       }
 
+      const date = moment().format("YYYYMMDDhhmmss");
       const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+      
       await FileSystem.writeAsStringAsync(fileName, base64Code, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      await MediaLibrary.saveToLibraryAsync(fileName);
+      
+      const asset = await MediaLibrary.createAssetAsync(fileName);
+      await MediaLibrary.createAlbumAsync("AI Images", asset, false);
       alert("Downloaded Successfully!");
     } catch (error) {
       console.log(error);
@@ -180,15 +193,37 @@ export default function Index() {
   };
 
   const handleShare = async () => {
-    if (!imageUrl) return;
+    if (!imageUrl) {
+      alert("No image to share");
+      return;
+    }
 
     try {
-      await Share.share({
-        message: `Check out this AI-generated image: ${prompt}`,
-        url: imageUrl,
+      const base64Code = imageUrl.split(",")[1];
+      if (!base64Code) {
+        alert("Invalid image data");
+        return;
+      }
+
+      const date = moment().format("YYYYMMDDhhmmss");
+      const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+      
+      await FileSystem.writeAsStringAsync(fileName, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
       });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileName, {
+          mimeType: 'image/jpeg',
+          dialogTitle: 'Share your AI-generated image',
+          UTI: 'public.jpeg'
+        });
+      } else {
+        alert("Sharing isn't available on your platform");
+      }
     } catch (error) {
       console.log(error);
+      alert("Failed to share image");
     }
   };
 
