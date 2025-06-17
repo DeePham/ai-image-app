@@ -11,7 +11,6 @@ import moment from "moment";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -21,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import Toast from 'react-native-toast-message';
 
 const examplePrompts = [
   "A mystical forest with glowing mushrooms and ethereal lighting",
@@ -115,22 +115,25 @@ export default function Index() {
 
   const generateImage = async () => {
     if (!user) {
-      Alert.alert(
-        "Authentication Required",
-        "Please sign in to generate images",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Sign In", onPress: () => router.push("/auth/login") },
-        ]
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Authentication Required',
+        text2: 'Please sign in to generate images',
+        position: 'top',
+        visibilityTime: 4000,
+        onPress: () => router.push("/auth/login")
+      });
       return;
     }
 
     if (!prompt || !aspectRatio || !model) {
-      Alert.alert(
-        "Missing Information",
-        "Please fill in all fields to generate an image"
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Information',
+        text2: 'Please fill in all fields to generate an image',
+        position: 'top',
+        visibilityTime: 4000
+      });
       return;
     }
 
@@ -154,16 +157,22 @@ export default function Index() {
           aspectRatio,
         });
         setPrompt("");
-        Alert.alert("Success", "Image generated successfully!", [
-          { text: "OK" },
-        ]);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Image generated successfully!',
+          position: 'top',
+          visibilityTime: 4000
+        });
       } catch (saveError) {
         console.error("Failed to save image to history:", saveError);
-        Alert.alert(
-          "Warning",
-          "Image generated successfully but couldn't be saved to history.",
-          [{ text: "OK" }]
-        );
+        Toast.show({
+          type: 'warning',
+          text1: 'Warning',
+          text2: 'Image generated successfully but couldn\'t be saved to history.',
+          position: 'top',
+          visibilityTime: 4000
+        });
         setPrompt("");
       }
     } catch (error) {
@@ -173,33 +182,56 @@ export default function Index() {
       let errorMessage = "Failed to generate image. Please try again.";
       if (error instanceof Error) {
         if (error.message.includes("network")) {
-          errorMessage =
-            "Network error. Please check your internet connection.";
+          errorMessage = "Network error. Please check your internet connection.";
         } else if (error.message.includes("timeout")) {
           errorMessage = "Request timeout. Please try again.";
         }
       }
 
-      Alert.alert("Error", errorMessage);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: errorMessage,
+        position: 'top',
+        visibilityTime: 4000
+      });
     }
   };
 
   const handleDownload = async () => {
     if (!imageUrl) {
-      alert("No image to download");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No image to download',
+        position: 'top',
+        visibilityTime: 4000
+      });
       return;
     }
 
     try {
       const base64Code = imageUrl.split(",")[1];
       if (!base64Code) {
-        alert("Invalid image data");
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Invalid image data',
+          position: 'top',
+          visibilityTime: 4000
+        });
         return;
       }
 
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
-        alert("Sorry, we need media library permissions to save images!");
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Required',
+          text2: 'Sorry, we need media library permissions to save images!',
+          position: 'top',
+          visibilityTime: 4000
+        });
         return;
       }
 
@@ -212,23 +244,47 @@ export default function Index() {
 
       const asset = await MediaLibrary.createAssetAsync(fileName);
       await MediaLibrary.createAlbumAsync("AI Images", asset, false);
-      alert("Downloaded Successfully!");
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Downloaded Successfully!',
+        position: 'top',
+        visibilityTime: 4000
+      });
     } catch (error) {
       console.log(error);
-      alert("Failed to download image");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to download image',
+        position: 'top',
+        visibilityTime: 4000
+      });
     }
   };
 
   const handleShare = async () => {
     if (!imageUrl) {
-      alert("No image to share");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No image to share',
+        position: 'top',
+        visibilityTime: 4000
+      });
       return;
     }
 
     try {
       const base64Code = imageUrl.split(",")[1];
       if (!base64Code) {
-        alert("Invalid image data");
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Invalid image data',
+          position: 'top',
+          visibilityTime: 4000
+        });
         return;
       }
 
@@ -246,11 +302,23 @@ export default function Index() {
           UTI: "public.jpeg",
         });
       } else {
-        alert("Sharing isn't available on your platform");
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Sharing isn\'t available on your platform',
+          position: 'top',
+          visibilityTime: 4000
+        });
       }
     } catch (error) {
       console.log(error);
-      alert("Failed to share image");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to share image',
+        position: 'top',
+        visibilityTime: 4000
+      });
     }
   };
 

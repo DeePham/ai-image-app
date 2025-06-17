@@ -9,7 +9,6 @@ import moment from "moment";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -18,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from 'react-native-toast-message';
 
 const windowWidth = Dimensions.get("window").width;
 const imageWidth = (windowWidth - 60) / 2;
@@ -45,62 +45,90 @@ export default function History() {
   );
 
   const handleDeleteImage = (id: string) => {
-    Alert.alert("Delete Image", "Are you sure you want to delete this image?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await ImageService.deleteFromHistory(id);
-            loadImages();
-          } catch (error) {
-            Alert.alert("Error", "Failed to delete image");
-          }
-        },
-      },
-    ]);
+    Toast.show({
+      type: 'info',
+      text1: 'Delete Image',
+      text2: 'Are you sure you want to delete this image?',
+      position: 'top',
+      visibilityTime: 4000,
+      onPress: async () => {
+        try {
+          await ImageService.deleteFromHistory(id);
+          loadImages();
+          Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Image deleted successfully',
+            position: 'top',
+            visibilityTime: 4000
+          });
+        } catch (error) {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Failed to delete image',
+            position: 'top',
+            visibilityTime: 4000
+          });
+        }
+      }
+    });
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      "Clear All History",
-      "Are you sure you want to delete all images?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Clear All",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await ImageService.clearHistory();
-              loadImages();
-            } catch (error) {
-              Alert.alert("Error", "Failed to clear history");
-            }
-          },
-        },
-      ]
-    );
+    Toast.show({
+      type: 'info',
+      text1: 'Clear All History',
+      text2: 'Are you sure you want to delete all images?',
+      position: 'top',
+      visibilityTime: 4000,
+      onPress: async () => {
+        try {
+          await ImageService.clearHistory();
+          loadImages();
+          Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'History cleared successfully',
+            position: 'top',
+            visibilityTime: 4000
+          });
+        } catch (error) {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Failed to clear history',
+            position: 'top',
+            visibilityTime: 4000
+          });
+        }
+      }
+    });
   };
 
   const handleDownload = async (imageUrl: string) => {
     try {
       const base64Code = imageUrl.split(",")[1];
       if (!base64Code) {
-        alert("Invalid image data");
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Invalid image data',
+          position: 'top',
+          visibilityTime: 4000
+        });
         return;
       }
 
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
-        alert("Sorry, we need media library permissions to save images!");
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Required',
+          text2: 'Sorry, we need media library permissions to save images!',
+          position: 'top',
+          visibilityTime: 4000
+        });
         return;
       }
 
@@ -113,10 +141,22 @@ export default function History() {
       
       const asset = await MediaLibrary.createAssetAsync(fileName);
       await MediaLibrary.createAlbumAsync("AI Images", asset, false);
-      Alert.alert("Success", "Image downloaded successfully!");
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Image downloaded successfully!',
+        position: 'top',
+        visibilityTime: 4000
+      });
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to download image");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to download image',
+        position: 'top',
+        visibilityTime: 4000
+      });
     }
   };
 
@@ -124,7 +164,13 @@ export default function History() {
     try {
       const base64Code = imageUrl.split(",")[1];
       if (!base64Code) {
-        alert("Invalid image data");
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Invalid image data',
+          position: 'top',
+          visibilityTime: 4000
+        });
         return;
       }
 
@@ -142,11 +188,23 @@ export default function History() {
           UTI: 'public.jpeg'
         });
       } else {
-        alert("Sharing isn't available on your platform");
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Sharing isn\'t available on your platform',
+          position: 'top',
+          visibilityTime: 4000
+        });
       }
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to share image");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to share image',
+        position: 'top',
+        visibilityTime: 4000
+      });
     }
   };
 
