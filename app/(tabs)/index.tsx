@@ -18,7 +18,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
@@ -52,18 +52,33 @@ const examplePrompts = [
 
 const modelData = [
   {
-    label: "FLUX.1-dev (Best Quality)",
-    value: "black-forest-labs/FLUX.1-dev",
-    premium: true,
-  },
-  {
-    label: "FLUX.1-schnell (Fast)",
-    value: "black-forest-labs/FLUX.1-schnell",
+    label: "Flux (Default)",
+    value: "flux",
     premium: false,
   },
   {
-    label: "Stable Diffusion XL",
-    value: "stabilityai/stable-diffusion-xl-base-1.0",
+    label: "Turbo (Fast)",
+    value: "turbo",
+    premium: false,
+  },
+  {
+    label: "Flux Realism",
+    value: "flux-realism",
+    premium: false,
+  },
+  {
+    label: "Flux Cablyai",
+    value: "flux-cablyai",
+    premium: false,
+  },
+  {
+    label: "Flux Anime",
+    value: "flux-anime",
+    premium: false,
+  },
+  {
+    label: "Any Dark",
+    value: "any-dark",
     premium: false,
   },
 ];
@@ -77,9 +92,7 @@ const aspectRatioData = [
 
 export default function Index() {
   const [prompt, setPrompt] = useState<string>("");
-  const [model, setModel] = useState<string>(
-    "black-forest-labs/FLUX.1-schnell"
-  );
+  const [model, setModel] = useState<string>("flux"); // Changed default
   const [aspectRatio, setAspectRatio] = useState<string>("1/1");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -141,12 +154,9 @@ export default function Index() {
           aspectRatio,
         });
         setPrompt("");
-        Alert.alert(
-          "Success",
-          "Image generated successfully",
-          [{ text: "OK" }]
-        );
-        return;
+        Alert.alert("Success", "Image generated successfully!", [
+          { text: "OK" },
+        ]);
       } catch (saveError) {
         console.error("Failed to save image to history:", saveError);
         Alert.alert(
@@ -157,9 +167,20 @@ export default function Index() {
         setPrompt("");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Generation error:", error);
       setIsLoading(false);
-      Alert.alert("Error", "Failed to generate image. Please try again.");
+
+      let errorMessage = "Failed to generate image. Please try again.";
+      if (error instanceof Error) {
+        if (error.message.includes("network")) {
+          errorMessage =
+            "Network error. Please check your internet connection.";
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Request timeout. Please try again.";
+        }
+      }
+
+      Alert.alert("Error", errorMessage);
     }
   };
 
@@ -184,11 +205,11 @@ export default function Index() {
 
       const date = moment().format("YYYYMMDDhhmmss");
       const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
-      
+
       await FileSystem.writeAsStringAsync(fileName, base64Code, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      
+
       const asset = await MediaLibrary.createAssetAsync(fileName);
       await MediaLibrary.createAlbumAsync("AI Images", asset, false);
       alert("Downloaded Successfully!");
@@ -213,16 +234,16 @@ export default function Index() {
 
       const date = moment().format("YYYYMMDDhhmmss");
       const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
-      
+
       await FileSystem.writeAsStringAsync(fileName, base64Code, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileName, {
-          mimeType: 'image/jpeg',
-          dialogTitle: 'Share your AI-generated image',
-          UTI: 'public.jpeg'
+          mimeType: "image/jpeg",
+          dialogTitle: "Share your AI-generated image",
+          UTI: "public.jpeg",
         });
       } else {
         alert("Sharing isn't available on your platform");
