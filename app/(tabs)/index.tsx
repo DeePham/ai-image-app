@@ -167,7 +167,7 @@ export default function Index() {
       } catch (saveError) {
         console.error("Failed to save image to history:", saveError);
         Toast.show({
-          type: 'warning',
+          type: 'info',
           text1: 'Warning',
           text2: 'Image generated successfully but couldn\'t be saved to history.',
           position: 'top',
@@ -211,46 +211,46 @@ export default function Index() {
     }
 
     try {
-      const base64Code = imageUrl.split(",")[1];
-      if (!base64Code) {
+      // Download image from URL
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Convert blob to base64 for FileSystem
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onload = async () => {
+        const base64Data = reader.result as string;
+        const base64Code = base64Data.split(",")[1];
+
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== "granted") {
+          Toast.show({
+            type: 'error',
+            text1: 'Permission Required',
+            text2: 'Sorry, we need media library permissions to save images!',
+            position: 'top',
+            visibilityTime: 4000
+          });
+          return;
+        }
+
+        const date = moment().format("YYYYMMDDhhmmss");
+        const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+
+        await FileSystem.writeAsStringAsync(fileName, base64Code, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        const asset = await MediaLibrary.createAssetAsync(fileName);
+        await MediaLibrary.createAlbumAsync("AI Images", asset, false);
         Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Invalid image data',
+          type: 'success',
+          text1: 'Success',
+          text2: 'Downloaded Successfully!',
           position: 'top',
           visibilityTime: 4000
         });
-        return;
-      }
-
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== "granted") {
-        Toast.show({
-          type: 'error',
-          text1: 'Permission Required',
-          text2: 'Sorry, we need media library permissions to save images!',
-          position: 'top',
-          visibilityTime: 4000
-        });
-        return;
-      }
-
-      const date = moment().format("YYYYMMDDhhmmss");
-      const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
-
-      await FileSystem.writeAsStringAsync(fileName, base64Code, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      const asset = await MediaLibrary.createAssetAsync(fileName);
-      await MediaLibrary.createAlbumAsync("AI Images", asset, false);
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Downloaded Successfully!',
-        position: 'top',
-        visibilityTime: 4000
-      });
+      };
     } catch (error) {
       console.log(error);
       Toast.show({
@@ -276,40 +276,40 @@ export default function Index() {
     }
 
     try {
-      const base64Code = imageUrl.split(",")[1];
-      if (!base64Code) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Invalid image data',
-          position: 'top',
-          visibilityTime: 4000
-        });
-        return;
-      }
+      // Download image from URL
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Convert blob to base64 for FileSystem
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onload = async () => {
+        const base64Data = reader.result as string;
+        const base64Code = base64Data.split(",")[1];
 
-      const date = moment().format("YYYYMMDDhhmmss");
-      const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+        const date = moment().format("YYYYMMDDhhmmss");
+        const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
 
-      await FileSystem.writeAsStringAsync(fileName, base64Code, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+        await FileSystem.writeAsStringAsync(fileName, base64Code, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileName, {
-          mimeType: "image/jpeg",
-          dialogTitle: "Share your AI-generated image",
-          UTI: "public.jpeg",
-        });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Sharing isn\'t available on your platform',
-          position: 'top',
-          visibilityTime: 4000
-        });
-      }
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileName, {
+            mimeType: "image/jpeg",
+            dialogTitle: "Share your AI-generated image",
+            UTI: "public.jpeg",
+          });
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Sharing isn\'t available on your platform',
+            position: 'top',
+            visibilityTime: 4000
+          });
+        }
+      };
     } catch (error) {
       console.log(error);
       Toast.show({

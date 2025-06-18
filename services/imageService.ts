@@ -15,7 +15,7 @@ export const ImageService = {
     image: Omit<GeneratedImage, "id" | "createdAt">
   ): Promise<GeneratedImage> {
     try {
-      console.log("Saving image to database...");
+      console.log("Saving image to storage and database...");
 
       const {
         data: { user },
@@ -26,11 +26,44 @@ export const ImageService = {
         throw new Error("User not authenticated");
       }
 
+      // Convert base64 to Uint8Array for React Native
+      const base64Data = image.imageUrl.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+
+      // Generate unique filename
+      const timestamp = new Date().getTime();
+      const filename = `${user.id}/${timestamp}.jpg`;
+
+      // Upload to Supabase Storage using Uint8Array
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('generated-images')
+        .upload(filename, byteArray, {
+          contentType: 'image/jpeg',
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('generated-images')
+        .getPublicUrl(filename);
+
+      // Save to database with storage URL
       const { data, error } = await supabase
         .from("generated_images")
         .insert({
           user_id: user.id,
-          image_url: image.imageUrl,
+          image_url: publicUrl,
           prompt: image.prompt,
           model: image.model,
           aspect_ratio: image.aspectRatio,
@@ -43,7 +76,7 @@ export const ImageService = {
         throw error;
       }
 
-      console.log("Image saved successfully to database");
+      console.log("Image saved successfully to storage and database");
       return {
         id: data.id,
         imageUrl: data.image_url,
@@ -107,13 +140,37 @@ export const ImageService = {
     try {
       console.log("Deleting image from database:", id);
 
+      // First get the image to get the storage path
+      const { data: imageData, error: fetchError } = await supabase
+        .from("generated_images")
+        .select("image_url")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Extract filename from URL
+      const url = new URL(imageData.image_url);
+      const pathParts = url.pathname.split('/');
+      const filename = pathParts[pathParts.length - 2] + '/' + pathParts[pathParts.length - 1];
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('generated-images')
+        .remove([filename]);
+
+      if (storageError) {
+        console.error("Storage delete error:", storageError);
+      }
+
+      // Delete from database
       const { error } = await supabase
         .from("generated_images")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
-      console.log("Image deleted successfully");
+      console.log("Image deleted successfully from storage and database");
     } catch (error) {
       console.error("Error deleting image from history:", error);
       throw error;
@@ -131,13 +188,39 @@ export const ImageService = {
 
       console.log("Clearing all images for user:", user.id);
 
+      // Get all images for the user
+      const { data: images, error: fetchError } = await supabase
+        .from("generated_images")
+        .select("image_url")
+        .eq("user_id", user.id);
+
+      if (fetchError) throw fetchError;
+
+      // Delete all images from storage
+      if (images && images.length > 0) {
+        const filenames = images.map(img => {
+          const url = new URL(img.image_url);
+          const pathParts = url.pathname.split('/');
+          return pathParts[pathParts.length - 2] + '/' + pathParts[pathParts.length - 1];
+        });
+
+        const { error: storageError } = await supabase.storage
+          .from('generated-images')
+          .remove(filenames);
+
+        if (storageError) {
+          console.error("Storage delete error:", storageError);
+        }
+      }
+
+      // Delete from database
       const { error } = await supabase
         .from("generated_images")
         .delete()
         .eq("user_id", user.id);
 
       if (error) throw error;
-      console.log("All images cleared successfully");
+      console.log("All images cleared successfully from storage and database");
     } catch (error) {
       console.error("Error clearing image history:", error);
       throw error;
