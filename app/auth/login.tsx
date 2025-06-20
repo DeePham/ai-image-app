@@ -1,10 +1,9 @@
-import { router } from "expo-router";
-import React, { useState } from "react";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { MainColor } from "@/constants/MainColor";
 import { AuthService } from "@/services/authService";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -23,7 +23,25 @@ export default function Login() {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Toast.show({
+        type: "error",
+        text1: "Missing Information",
+        text2: "Please fill in all fields",
+        position: "top",
+        visibilityTime: 4000,
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid email address",
+        position: "top",
+        visibilityTime: 4000,
+      });
       return;
     }
 
@@ -31,14 +49,28 @@ export default function Login() {
     const { error } = await AuthService.signIn(email, password);
     setLoading(false);
 
-    if (error) {
-      Alert.alert("Error", error.message);
+    if (error?.message) {
+      Toast.show({
+        type: "error",
+        text1: "Sign In Failed",
+        text2: error?.message,
+        position: "top",
+        visibilityTime: 4000,
+      });
     } else {
-      // Clear form
+      Toast.show({
+        type: "success",
+        text1: "Welcome Back!",
+        text2: "Successfully signed in",
+        position: "top",
+        visibilityTime: 2000,
+      });
+
       setEmail("");
       setPassword("");
-      // Navigate to main app
-      router.replace("/(tabs)");
+      setTimeout(() => {
+        router.replace("/(tabs)");
+      }, 500);
     }
   };
 

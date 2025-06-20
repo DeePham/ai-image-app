@@ -4,7 +4,6 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -25,17 +25,62 @@ export default function Register() {
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields");
+      Toast.show({
+        type: "error",
+        text1: "Missing Information",
+        text2: "Please fill in all fields",
+        position: "top",
+        visibilityTime: 4000,
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid email address",
+        position: "top",
+        visibilityTime: 4000,
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Toast.show({
+        type: "error",
+        text1: "Password Mismatch",
+        text2: "Passwords do not match",
+        position: "top",
+        visibilityTime: 4000,
+      });
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
+      Toast.show({
+        type: "error",
+        text1: "Weak Password",
+        text2: "Password must be at least 6 characters long",
+        position: "top",
+        visibilityTime: 4000,
+      });
+      return;
+    }
+
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
+      Toast.show({
+        type: "info",
+        text1: "Password Suggestion",
+        text2: "Use uppercase, lowercase, and numbers for better security",
+        position: "top",
+        visibilityTime: 4000,
+      });
       return;
     }
 
@@ -43,14 +88,29 @@ export default function Register() {
     const { error } = await AuthService.signUp(email, password);
     setLoading(false);
 
-    if (error) {
-      Alert.alert("Error", error.message);
+    if (error?.message) {
+      Toast.show({
+        type: "error",
+        text1: "Registration Failed",
+        text2: error?.message,
+        position: "top",
+        visibilityTime: 4000,
+      });
     } else {
-      Alert.alert(
-        "Success",
-        "Account created successfully! You can now sign in.",
-        [{ text: "OK", onPress: () => router.replace("/auth/login") }]
-      );
+      Toast.show({
+        type: "success",
+        text1: "Account Created! 🎉",
+        text2: "Please login again!",
+        position: "top",
+        visibilityTime: 5000,
+      });
+
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setTimeout(() => {
+        router.replace("/auth/login");
+      }, 1500);
     }
   };
 
