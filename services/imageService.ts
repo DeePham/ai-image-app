@@ -26,7 +26,6 @@ export const ImageService = {
         throw new Error("User not authenticated");
       }
 
-      // Convert base64 to Uint8Array for React Native
       const base64Data = image.imageUrl.split(',')[1];
       const byteCharacters = atob(base64Data);
       const byteNumbers = new Array(byteCharacters.length);
@@ -35,11 +34,9 @@ export const ImageService = {
       }
       const byteArray = new Uint8Array(byteNumbers);
 
-      // Generate unique filename
       const timestamp = new Date().getTime();
       const filename = `${user.id}/${timestamp}.jpg`;
 
-      // Upload to Supabase Storage using Uint8Array
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('generated-images')
         .upload(filename, byteArray, {
@@ -53,12 +50,10 @@ export const ImageService = {
         throw uploadError;
       }
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('generated-images')
         .getPublicUrl(filename);
 
-      // Save to database with storage URL
       const { data, error } = await supabase
         .from("generated_images")
         .insert({
@@ -140,7 +135,6 @@ export const ImageService = {
     try {
       console.log("Deleting image from database:", id);
 
-      // First get the image to get the storage path
       const { data: imageData, error: fetchError } = await supabase
         .from("generated_images")
         .select("image_url")
@@ -149,12 +143,10 @@ export const ImageService = {
 
       if (fetchError) throw fetchError;
 
-      // Extract filename from URL
       const url = new URL(imageData.image_url);
       const pathParts = url.pathname.split('/');
       const filename = pathParts[pathParts.length - 2] + '/' + pathParts[pathParts.length - 1];
 
-      // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('generated-images')
         .remove([filename]);
@@ -163,7 +155,6 @@ export const ImageService = {
         console.error("Storage delete error:", storageError);
       }
 
-      // Delete from database
       const { error } = await supabase
         .from("generated_images")
         .delete()
@@ -188,7 +179,6 @@ export const ImageService = {
 
       console.log("Clearing all images for user:", user.id);
 
-      // Get all images for the user
       const { data: images, error: fetchError } = await supabase
         .from("generated_images")
         .select("image_url")
@@ -196,7 +186,6 @@ export const ImageService = {
 
       if (fetchError) throw fetchError;
 
-      // Delete all images from storage
       if (images && images.length > 0) {
         const filenames = images.map(img => {
           const url = new URL(img.image_url);
@@ -213,7 +202,6 @@ export const ImageService = {
         }
       }
 
-      // Delete from database
       const { error } = await supabase
         .from("generated_images")
         .delete()

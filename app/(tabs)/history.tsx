@@ -106,48 +106,51 @@ export default function History() {
     });
   };
 
+  const downloadImageToFile = async (imageUrl: string): Promise<string> => {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const imageData = await response.arrayBuffer();
+    const byteArray = new Uint8Array(imageData);
+    
+    const base64Data = btoa(String.fromCharCode(...byteArray));
+    
+    const date = moment().format("YYYYMMDDhhmmss");
+    const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
+
+    await FileSystem.writeAsStringAsync(fileName, base64Data, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    
+    return fileName;
+  };
+
   const handleDownload = async (imageUrl: string) => {
     try {
-      // Download image from URL
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      
-      // Convert blob to base64 for FileSystem
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onload = async () => {
-        const base64Data = reader.result as string;
-        const base64Code = base64Data.split(",")[1];
-
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== "granted") {
-          Toast.show({
-            type: 'error',
-            text1: 'Permission Required',
-            text2: 'Sorry, we need media library permissions to save images!',
-            position: 'top',
-            visibilityTime: 4000
-          });
-          return;
-        }
-
-        const date = moment().format("YYYYMMDDhhmmss");
-        const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
-        
-        await FileSystem.writeAsStringAsync(fileName, base64Code, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        
-        const asset = await MediaLibrary.createAssetAsync(fileName);
-        await MediaLibrary.createAlbumAsync("AI Images", asset, false);
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
         Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Image downloaded successfully!',
+          type: 'error',
+          text1: 'Permission Required',
+          text2: 'Sorry, we need media library permissions to save images!',
           position: 'top',
           visibilityTime: 4000
         });
-      };
+        return;
+      }
+
+      const fileName = await downloadImageToFile(imageUrl);
+      const asset = await MediaLibrary.createAssetAsync(fileName);
+      await MediaLibrary.createAlbumAsync("AI Images", asset, false);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Image downloaded successfully!',
+        position: 'top',
+        visibilityTime: 4000
+      });
     } catch (error) {
       console.log(error);
       Toast.show({
@@ -162,40 +165,23 @@ export default function History() {
 
   const handleShare = async (imageUrl: string) => {
     try {
-      // Download image from URL
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
+      const fileName = await downloadImageToFile(imageUrl);
       
-      // Convert blob to base64 for FileSystem
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onload = async () => {
-        const base64Data = reader.result as string;
-        const base64Code = base64Data.split(",")[1];
-
-        const date = moment().format("YYYYMMDDhhmmss");
-        const fileName = `${FileSystem.documentDirectory}${date}.jpeg`;
-        
-        await FileSystem.writeAsStringAsync(fileName, base64Code, {
-          encoding: FileSystem.EncodingType.Base64,
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileName, {
+          mimeType: 'image/jpeg',
+          dialogTitle: 'Share your AI-generated image',
+          UTI: 'public.jpeg'
         });
-
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(fileName, {
-            mimeType: 'image/jpeg',
-            dialogTitle: 'Share your AI-generated image',
-            UTI: 'public.jpeg'
-          });
-        } else {
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: 'Sharing isn\'t available on your platform',
-            position: 'top',
-            visibilityTime: 4000
-          });
-        }
-      };
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Sharing isn\'t available on your platform',
+          position: 'top',
+          visibilityTime: 4000
+        });
+      }
     } catch (error) {
       console.log(error);
       Toast.show({
