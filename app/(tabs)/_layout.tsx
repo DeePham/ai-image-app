@@ -6,6 +6,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Tabs, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StatusBar, TouchableOpacity } from "react-native";
+import Toast from 'react-native-toast-message';
 
 export default function TabLayout() {
   const [user, setUser] = useState<any>(null);
@@ -102,7 +103,30 @@ export default function TabLayout() {
               ),
           }}
         />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome5 name="user" size={size} color={color} />
+            ),
+            headerRight: () =>
+              user && (
+                <TouchableOpacity
+                  onPress={handleSignOut}
+                  style={{ marginRight: 16, padding: 8 }}
+                >
+                  <FontAwesome5
+                    name="sign-out-alt"
+                    size={18}
+                    color={MainColor.textSecondary}
+                  />
+                </TouchableOpacity>
+              ),
+          }}
+        />
       </Tabs>
+      <Toast />
     </AuthGuard>
   );
 }
