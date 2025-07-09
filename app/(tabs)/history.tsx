@@ -1,4 +1,5 @@
 import { MainColor } from "@/constants/MainColor";
+import { AIService } from "@/services/aiService";
 import { GeneratedImage, ImageService } from "@/services/imageService";
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from "@react-navigation/native";
@@ -29,6 +30,10 @@ export default function History() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [confirmClearAllVisible, setConfirmClearAllVisible] = useState(false);
 
   const loadImages = async () => {
     setLoading(true);
@@ -82,35 +87,15 @@ export default function History() {
     });
   };
 
-  const handleClearAll = () => {
-    Toast.show({
-      type: 'info',
-      text1: 'Clear All History',
-      text2: 'Are you sure you want to delete all images?',
-      position: 'top',
-      visibilityTime: 4000,
-      onPress: async () => {
-        try {
-          await ImageService.clearHistory();
-          loadImages();
-          Toast.show({
-            type: 'success',
-            text1: 'Success',
-            text2: 'History cleared successfully',
-            position: 'top',
-            visibilityTime: 4000
-          });
-        } catch (error) {
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: 'Failed to clear history',
-            position: 'top',
-            visibilityTime: 4000
-          });
-        }
-      }
-    });
+  const requestClearAll = () => {
+    setConfirmClearAllVisible(true);
+  };
+  const handleConfirmClearAll = async () => {
+    await handleClearAll();
+    setConfirmClearAllVisible(false);
+  };
+  const handleCancelClearAll = () => {
+    setConfirmClearAllVisible(false);
   };
 
   const handleToggleFavorite = async (imageId: string) => {
@@ -130,6 +115,42 @@ export default function History() {
         position: 'top',
         visibilityTime: 4000
       });
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!selectedImage) return;
+    setRegenerating(true);
+    try {
+      const base64Data = await AIService.generateImage({
+        prompt: selectedImage.prompt,
+        model: selectedImage.model,
+        aspectRatio: selectedImage.aspectRatio,
+      });
+      await ImageService.saveToHistory({
+        imageUrl: base64Data,
+        prompt: selectedImage.prompt,
+        model: selectedImage.model,
+        aspectRatio: selectedImage.aspectRatio,
+      });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Image regenerated!',
+        position: 'top',
+        visibilityTime: 4000
+      });
+      loadImages();
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to regenerate image',
+        position: 'top',
+        visibilityTime: 4000
+      });
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -230,6 +251,45 @@ export default function History() {
     setSelectedImage(null);
   };
 
+  const requestDeleteImage = (id: string) => {
+    setPendingDeleteId(id);
+    setConfirmDeleteVisible(true);
+  };
+  const handleConfirmDelete = async () => {
+    if (pendingDeleteId) {
+      await handleDeleteImage(pendingDeleteId);
+      setConfirmDeleteVisible(false);
+      setPendingDeleteId(null);
+      closeImageModal();
+    }
+  };
+  const handleCancelDelete = () => {
+    setConfirmDeleteVisible(false);
+    setPendingDeleteId(null);
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await ImageService.clearHistory();
+      loadImages();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'History cleared successfully',
+        position: 'top',
+        visibilityTime: 4000
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to clear history',
+        position: 'top',
+        visibilityTime: 4000
+      });
+    }
+  };
+
   const renderImageItem = ({ item }: { item: GeneratedImage }) => (
     <TouchableOpacity onPress={() => openImageModal(item)} style={styles.imageItem}>
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
@@ -249,7 +309,7 @@ export default function History() {
     <View style={styles.container}>
       <View style={styles.header}>
         {images.length > 0 && (
-          <TouchableOpacity onPress={handleClearAll}>
+          <TouchableOpacity onPress={requestClearAll}>
             <Text style={styles.clearButton}>Clear All</Text>
           </TouchableOpacity>
         )}
@@ -292,13 +352,20 @@ export default function History() {
                       color={favoriteIds.includes(selectedImage.id) ? "#ff4081" : MainColor.primary}
                     />
                   </TouchableOpacity>
+                  <TouchableOpacity onPress={handleRegenerate} disabled={regenerating}>
+                    {regenerating ? (
+                      <ActivityIndicator size={28} color={MainColor.primary} />
+                    ) : (
+                      <FontAwesome name="refresh" size={28} color={MainColor.primary} />
+                    )}
+                  </TouchableOpacity>
                   <TouchableOpacity onPress={() => { handleDownload(selectedImage.imageUrl); }}>
                     <FontAwesome name="download" size={28} color={MainColor.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => { handleShare(selectedImage.imageUrl); }}>
                     <FontAwesome name="share" size={28} color={MainColor.primary} />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => { handleDeleteImage(selectedImage.id); closeImageModal(); }}>
+                  <TouchableOpacity onPress={() => { requestDeleteImage(selectedImage.id); closeImageModal(); }}>
                     <FontAwesome name="trash" size={28} color={MainColor.primary} />
                   </TouchableOpacity>
                 </View>
@@ -310,6 +377,55 @@ export default function History() {
                 </TouchableOpacity>
               </>
             )}
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={confirmDeleteVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelDelete}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: MainColor.background, borderRadius: 12, padding: 24, alignItems: 'center', width: '80%' }}>
+            <Text style={{ color: MainColor.text, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>
+              Are you sure you want to delete this image?
+            </Text>
+            {pendingDeleteId && favoriteIds.includes(pendingDeleteId) && (
+              <Text style={{ color: MainColor.error, fontSize: 14, marginBottom: 10, textAlign: 'center' }}>
+                This image is also in your favorites. Deleting it will remove it from your favorites as well.
+              </Text>
+            )}
+            <View style={{ flexDirection: 'row', gap: 24 }}>
+              <TouchableOpacity onPress={handleCancelDelete} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
+                <Text style={{ color: MainColor.primary, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleConfirmDelete} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
+                <Text style={{ color: MainColor.error, fontWeight: 'bold', fontSize: 16 }}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={confirmClearAllVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelClearAll}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: MainColor.background, borderRadius: 12, padding: 24, alignItems: 'center', width: '80%' }}>
+            <Text style={{ color: MainColor.text, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>
+              Are you sure you want to delete all images?
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 24 }}>
+              <TouchableOpacity onPress={handleCancelClearAll} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
+                <Text style={{ color: MainColor.primary, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleConfirmClearAll} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
+                <Text style={{ color: MainColor.error, fontWeight: 'bold', fontSize: 16 }}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
