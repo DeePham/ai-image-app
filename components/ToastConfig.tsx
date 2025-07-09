@@ -1,69 +1,58 @@
-import { MainColor } from "@/constants/MainColor";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { BaseToast, ErrorToast, InfoToast } from "react-native-toast-message";
 
-export const toastConfig = {
-  success: (props: any) => (
-    <BaseToast
-      {...props}
-      style={[styles.toastBase, styles.successToast]}
-      contentContainerStyle={styles.contentContainer}
-      text1Style={styles.text1}
-      text2Style={styles.text2}
-      renderLeadingIcon={() => (
-        <View style={styles.iconContainer}>
-          <FontAwesome5
-            name="check-circle"
-            size={20}
-            color={MainColor.success}
-          />
-        </View>
-      )}
-    />
-  ),
+export function createToastConfig(theme: any) {
+  const styles = createStyles(theme);
 
-  error: (props: any) => (
-    <ErrorToast
-      {...props}
-      style={[styles.toastBase, styles.errorToast]}
-      contentContainerStyle={styles.contentContainer}
-      text1Style={styles.text1}
-      text2Style={styles.text2}
-      renderLeadingIcon={() => (
-        <View style={styles.iconContainer}>
-          <FontAwesome5
-            name="exclamation-circle"
-            size={20}
-            color={MainColor.error}
-          />
-        </View>
-      )}
-    />
-  ),
+  return {
+    success: (props: any) => (
+      <BaseToast
+        {...props}
+        style={[styles.toastBase, styles.successToast]}
+        contentContainerStyle={styles.contentContainer}
+        text1Style={styles.text1}
+        text2Style={styles.text2}
+        renderLeadingIcon={() => (
+          <View style={styles.iconContainer}>
+            <FontAwesome5 name="check-circle" size={20} color={theme.success} />
+          </View>
+        )}
+      />
+    ),
+    error: (props: any) => (
+      <ErrorToast
+        {...props}
+        style={[styles.toastBase, styles.errorToast]}
+        contentContainerStyle={styles.contentContainer}
+        text1Style={styles.text1}
+        text2Style={styles.text2}
+        renderLeadingIcon={() => (
+          <View style={styles.iconContainer}>
+            <FontAwesome5 name="exclamation-circle" size={20} color={theme.error} />
+          </View>
+        )}
+      />
+    ),
+    info: (props: any) => (
+      <InfoToast
+        {...props}
+        style={[styles.toastBase, styles.infoToast]}
+        contentContainerStyle={styles.contentContainer}
+        text1Style={styles.text1}
+        text2Style={styles.text2}
+        renderLeadingIcon={() => (
+          <View style={styles.iconContainer}>
+            <FontAwesome5 name="info-circle" size={20} color={theme.primary} />
+          </View>
+        )}
+      />
+    ),
+  };
+}
 
-  info: (props: any) => (
-    <InfoToast
-      {...props}
-      style={[styles.toastBase, styles.infoToast]}
-      contentContainerStyle={styles.contentContainer}
-      text1Style={styles.text1}
-      text2Style={styles.text2}
-      renderLeadingIcon={() => (
-        <View style={styles.iconContainer}>
-          <FontAwesome5
-            name="info-circle"
-            size={20}
-            color={MainColor.primary}
-          />
-        </View>
-      )}
-    />
-  ),
-};
-
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   toastBase: {
     width: "90%",
     borderLeftWidth: 0,
@@ -71,13 +60,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   successToast: {
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
   },
   errorToast: {
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
   },
   infoToast: {
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
   },
   contentContainer: {
     paddingHorizontal: 16,
@@ -86,11 +75,11 @@ const styles = StyleSheet.create({
   text1: {
     fontSize: 16,
     fontWeight: "600",
-    color: MainColor.text,
+    color: theme.text,
   },
   text2: {
     fontSize: 14,
-    color: MainColor.textSecondary,
+    color: theme.textSecondary,
     marginTop: 2,
   },
   iconContainer: {

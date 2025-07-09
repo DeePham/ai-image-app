@@ -1,9 +1,10 @@
-import { MainColor } from "@/constants/MainColor";
+import { useTheme } from "@/app/_layout";
 import { AIService } from "@/services/aiService";
 import { GeneratedImage, ImageService } from "@/services/imageService";
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from "@react-navigation/native";
 import * as FileSystem from "expo-file-system";
+import { LinearGradient } from 'expo-linear-gradient';
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import moment from "moment";
@@ -24,7 +25,9 @@ import Toast from 'react-native-toast-message';
 const windowWidth = Dimensions.get("window").width;
 const imageWidth = (windowWidth - 60) / 2;
 
-export default function History() {
+export default function HistoryScreen() {
+  const { theme, themeName } = useTheme();
+  const styles = createStyles(theme);
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
@@ -296,17 +299,24 @@ export default function History() {
     </TouchableOpacity>
   );
 
+  const Background = themeName === 'special' ? LinearGradient : View;
+  const backgroundProps = themeName === 'special'
+    ? { colors: theme.gradient as [string, string, ...string[]], start: { x: 0, y: 0 }, end: { x: 1, y: 1 }, style: [styles.container, { flex: 1 }] }
+    : { colors: ['#fff', '#fff'] as [string, string], style: styles.container };
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={MainColor.primary} />
-        <Text style={styles.loadingText}>Loading your images...</Text>
-      </View>
+      <Background {...backgroundProps}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={styles.loadingText}>Loading your images...</Text>
+        </View>
+      </Background>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Background {...backgroundProps}>
       <View style={styles.header}>
         {images.length > 0 && (
           <TouchableOpacity onPress={requestClearAll}>
@@ -314,10 +324,9 @@ export default function History() {
           </TouchableOpacity>
         )}
       </View>
-
       {images.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <FontAwesome name="image" size={64} color={MainColor.placeholder} />
+          <FontAwesome name="image" size={64} color={theme.placeholder} />
           <Text style={styles.emptyText}>No images generated yet</Text>
           <Text style={styles.emptySubText}>
             Generate your first AI image to see it here
@@ -340,7 +349,7 @@ export default function History() {
         onRequestClose={closeImageModal}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: MainColor.background, borderRadius: 16, padding: 20, alignItems: 'center', width: '85%' }}>
+          <View style={{ backgroundColor: theme.background, borderRadius: 16, padding: 20, alignItems: 'center', width: '85%' }}>
             {selectedImage && (
               <>
                 <Image source={{ uri: selectedImage.imageUrl }} style={{ width: 250, height: 250, borderRadius: 12, marginBottom: 16 }} />
@@ -349,31 +358,31 @@ export default function History() {
                     <FontAwesome
                       name={favoriteIds.includes(selectedImage.id) ? "heart" : "heart-o"}
                       size={28}
-                      color={favoriteIds.includes(selectedImage.id) ? "#ff4081" : MainColor.primary}
+                      color={favoriteIds.includes(selectedImage.id) ? "#ff4081" : theme.primary}
                     />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleRegenerate} disabled={regenerating}>
                     {regenerating ? (
-                      <ActivityIndicator size={28} color={MainColor.primary} />
+                      <ActivityIndicator size={28} color={theme.primary} />
                     ) : (
-                      <FontAwesome name="refresh" size={28} color={MainColor.primary} />
+                      <FontAwesome name="refresh" size={28} color={theme.primary} />
                     )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => { handleDownload(selectedImage.imageUrl); }}>
-                    <FontAwesome name="download" size={28} color={MainColor.primary} />
+                    <FontAwesome name="download" size={28} color={theme.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => { handleShare(selectedImage.imageUrl); }}>
-                    <FontAwesome name="share" size={28} color={MainColor.primary} />
+                    <FontAwesome name="share" size={28} color={theme.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => { requestDeleteImage(selectedImage.id); closeImageModal(); }}>
-                    <FontAwesome name="trash" size={28} color={MainColor.primary} />
+                    <FontAwesome name="trash" size={28} color={theme.primary} />
                   </TouchableOpacity>
                 </View>
-                <Text style={{ color: MainColor.text, fontSize: 14, marginBottom: 4 }}>{selectedImage.prompt}</Text>
-                <Text style={{ color: MainColor.placeholder, fontSize: 12 }}>{selectedImage.model.split("/").pop()} • {selectedImage.aspectRatio}</Text>
-                <Text style={{ color: MainColor.placeholder, fontSize: 12 }}>{new Date(selectedImage.createdAt).toLocaleDateString()}</Text>
+                <Text style={{ color: theme.text, fontSize: 14, marginBottom: 4 }}>{selectedImage.prompt}</Text>
+                <Text style={{ color: theme.placeholder, fontSize: 12 }}>{selectedImage.model.split("/").pop()} • {selectedImage.aspectRatio}</Text>
+                <Text style={{ color: theme.placeholder, fontSize: 12 }}>{new Date(selectedImage.createdAt).toLocaleDateString()}</Text>
                 <TouchableOpacity onPress={closeImageModal} style={{ marginTop: 18, padding: 10 }}>
-                  <Text style={{ color: MainColor.accent, fontWeight: 'bold', fontSize: 16 }}>Close</Text>
+                  <Text style={{ color: theme.accent, fontWeight: 'bold', fontSize: 16 }}>Close</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -387,21 +396,21 @@ export default function History() {
         onRequestClose={handleCancelDelete}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: MainColor.background, borderRadius: 12, padding: 24, alignItems: 'center', width: '80%' }}>
-            <Text style={{ color: MainColor.text, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>
+          <View style={{ backgroundColor: theme.background, borderRadius: 12, padding: 24, alignItems: 'center', width: '80%' }}>
+            <Text style={{ color: theme.text, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>
               Are you sure you want to delete this image?
             </Text>
             {pendingDeleteId && favoriteIds.includes(pendingDeleteId) && (
-              <Text style={{ color: MainColor.error, fontSize: 14, marginBottom: 10, textAlign: 'center' }}>
+              <Text style={{ color: theme.error, fontSize: 14, marginBottom: 10, textAlign: 'center' }}>
                 This image is also in your favorites. Deleting it will remove it from your favorites as well.
               </Text>
             )}
             <View style={{ flexDirection: 'row', gap: 24 }}>
               <TouchableOpacity onPress={handleCancelDelete} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
-                <Text style={{ color: MainColor.primary, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+                <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleConfirmDelete} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
-                <Text style={{ color: MainColor.error, fontWeight: 'bold', fontSize: 16 }}>Delete</Text>
+                <Text style={{ color: theme.error, fontWeight: 'bold', fontSize: 16 }}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -414,29 +423,29 @@ export default function History() {
         onRequestClose={handleCancelClearAll}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: MainColor.background, borderRadius: 12, padding: 24, alignItems: 'center', width: '80%' }}>
-            <Text style={{ color: MainColor.text, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>
+          <View style={{ backgroundColor: theme.background, borderRadius: 12, padding: 24, alignItems: 'center', width: '80%' }}>
+            <Text style={{ color: theme.text, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>
               Are you sure you want to delete all images?
             </Text>
             <View style={{ flexDirection: 'row', gap: 24 }}>
               <TouchableOpacity onPress={handleCancelClearAll} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
-                <Text style={{ color: MainColor.primary, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+                <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleConfirmClearAll} style={{ padding: 10, minWidth: 80, alignItems: 'center' }}>
-                <Text style={{ color: MainColor.error, fontWeight: 'bold', fontSize: 16 }}>Delete</Text>
+                <Text style={{ color: theme.error, fontWeight: 'bold', fontSize: 16 }}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </Background>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: MainColor.background,
+    backgroundColor: theme.background,
   },
   header: {
     flexDirection: "row",
@@ -448,10 +457,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: MainColor.text,
+    color: theme.text,
   },
   clearButton: {
-    color: MainColor.accent,
+    color: theme.accent,
     fontSize: 16,
     fontWeight: "500",
   },
@@ -461,9 +470,9 @@ const styles = StyleSheet.create({
   imageItem: {
     flex: 1,
     margin: 10,
-    backgroundColor: MainColor.background,
+    backgroundColor: theme.background,
     borderRadius: 10,
-    borderColor: MainColor.accent,
+    borderColor: theme.accent,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
@@ -500,17 +509,17 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   promptText: {
-    color: MainColor.text,
+    color: theme.text,
     fontSize: 12,
     marginBottom: 4,
   },
   metaText: {
-    color: MainColor.placeholder,
+    color: theme.placeholder,
     fontSize: 10,
     marginBottom: 2,
   },
   dateText: {
-    color: MainColor.placeholder,
+    color: theme.placeholder,
     fontSize: 10,
   },
   emptyContainer: {
@@ -520,14 +529,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyText: {
-    color: MainColor.text,
+    color: theme.text,
     fontSize: 18,
     fontWeight: "500",
     marginTop: 16,
     textAlign: "center",
   },
   emptySubText: {
-    color: MainColor.placeholder,
+    color: theme.placeholder,
     fontSize: 14,
     marginTop: 8,
     textAlign: "center",
@@ -536,10 +545,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: MainColor.background,
+    backgroundColor: theme.background,
   },
   loadingText: {
-    color: MainColor.textSecondary,
+    color: theme.textSecondary,
     fontSize: 16,
     marginTop: 16,
   },

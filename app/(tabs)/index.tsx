@@ -1,9 +1,10 @@
-import { MainColor } from "@/constants/MainColor";
+import { useTheme } from "@/app/_layout";
 import { AIService } from "@/services/aiService";
 import { AuthService } from "@/services/authService";
 import { ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import * as FileSystem from "expo-file-system";
+import { LinearGradient } from 'expo-linear-gradient';
 import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
 import * as Sharing from "expo-sharing";
@@ -315,168 +316,204 @@ export default function Index() {
     }
   };
 
+  const { theme, themeName } = useTheme();
+  const styles = createStyles(theme);
+
+  // For header gradient
+  const HeaderBackground = themeName === 'special' ? LinearGradient : View;
+  const headerBackgroundProps = themeName === 'special'
+    ? { colors: theme.gradient as [string, string, ...string[]], start: { x: 0, y: 0 }, end: { x: 1, y: 1 }, style: styles.header }
+    : { colors: ['#fff', '#fff'] as [string, string], style: styles.header };
+  // For footer gradient (if you have a footer section)
+
+  const Background = themeName === 'special' ? LinearGradient : View;
+  const backgroundProps = themeName === 'special'
+    ? { colors: theme.gradient as [string, string, ...string[]], start: { x: 0, y: 0 }, end: { x: 1, y: 1 }, style: [styles.container, { flex: 1 }] }
+    : { colors: ['#fff', '#fff'] as [string, string], style: styles.container };
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>AI Image Generator</Text>
-          <Text style={styles.headerSubtitle}>
-            Transform your imagination into stunning visuals. You can describe a scene, or even describe how you want to transform an image (e.g., &quot;A cat sitting on a red couch, but as a tiger&quot;).
-          </Text>
-        </View>
-
-        {/* Prompt Input (Encourage creative/transform prompts) */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Describe Your Vision</Text>
-          <View style={styles.promptContainer}>
-            <TextInput
-              placeholder="Describe your imagination or transformation in detail..."
-              placeholderTextColor={MainColor.placeholder}
-              style={styles.inputField}
-              numberOfLines={4}
-              multiline={true}
-              value={prompt}
-              onChangeText={setPrompt}
-            />
-            <TouchableOpacity style={styles.ideaBtn} onPress={generatePrompt}>
-              <FontAwesome5 name="dice" size={20} color={MainColor.white} />
-            </TouchableOpacity>
+    <Background {...backgroundProps}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>AI Image Generator</Text>
+            <Text style={styles.headerSubtitle}>
+              Transform your imagination into stunning visuals. You can describe a scene, or even describe how you want to transform an image (e.g., &quot;A cat sitting on a red couch, but as a tiger&quot;).
+            </Text>
           </View>
-        </View>
 
-        {/* Model Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>AI Model</Text>
-          <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
-            data={modelData}
-            maxHeight={300}
-            labelField="label"
-            valueField="value"
-            placeholder="Select AI model"
-            value={model}
-            onChange={(item) => setModel(item.value)}
-            renderItem={(item) => (
-              <View style={styles.dropdownItem}>
-                <Text style={styles.dropdownItemText}>{item.label}</Text>
-                {item.premium && (
-                  <View style={styles.premiumBadge}>
-                    <Text style={styles.premiumText}>Premium</Text>
+          {/* Prompt Input (Encourage creative/transform prompts) */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Describe Your Vision</Text>
+            <View style={styles.promptContainer}>
+              <TextInput
+                placeholder="Describe your imagination or transformation in detail..."
+                placeholderTextColor={theme.placeholder}
+                style={styles.inputField}
+                numberOfLines={4}
+                multiline={true}
+                value={prompt}
+                onChangeText={setPrompt}
+              />
+              <TouchableOpacity style={styles.ideaBtn} onPress={generatePrompt}>
+                <FontAwesome5 name="dice" size={20} color={theme.white} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Model Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>AI Model</Text>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              containerStyle={themeName === 'special' ? { padding: 0, borderRadius: 12, overflow: 'hidden' } : { backgroundColor: theme.surface }}
+              itemContainerStyle={themeName === 'special' ? { padding: 0 } : { backgroundColor: theme.surface }}
+              itemTextStyle={themeName === 'special' ? { color: '#fff' } : { color: theme.text }}
+              data={modelData}
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder="Select AI model"
+              value={model}
+              onChange={(item) => setModel(item.value)}
+              renderItem={(item) => (
+                themeName === 'special' ? (
+                  <LinearGradient
+                    colors={theme.gradient as [string, string, ...string[]]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ borderRadius: 0, padding: 12 }}
+                  >
+                    <Text style={[styles.dropdownItemText, { color: '#fff' }]}>{item.label}</Text>
+                    {item.premium && (
+                      <View style={styles.premiumBadge}>
+                        <Text style={styles.premiumText}>Premium</Text>
+                      </View>
+                    )}
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.dropdownItem}>
+                    <Text style={styles.dropdownItemText}>{item.label}</Text>
+                    {item.premium && (
+                      <View style={styles.premiumBadge}>
+                        <Text style={styles.premiumText}>Premium</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-            )}
-          />
-        </View>
+                )
+              )}
+            />
+          </View>
 
-        {/* Aspect Ratio Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Aspect Ratio</Text>
-          <View style={styles.aspectRatioContainer}>
-            {aspectRatioData.map((item) => (
-              <TouchableOpacity
-                key={item.value}
-                style={[
-                  styles.aspectRatioItem,
-                  aspectRatio === item.value && styles.aspectRatioItemSelected,
-                ]}
-                onPress={() => setAspectRatio(item.value)}
-              >
-                <FontAwesome5
-                  name={item.icon as any}
-                  size={20}
-                  color={
-                    aspectRatio === item.value
-                      ? MainColor.white
-                      : MainColor.textSecondary
-                  }
-                />
-                <Text
+          {/* Aspect Ratio Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Aspect Ratio</Text>
+            <View style={styles.aspectRatioContainer}>
+              {aspectRatioData.map((item) => (
+                <TouchableOpacity
+                  key={item.value}
                   style={[
-                    styles.aspectRatioText,
-                    aspectRatio === item.value &&
-                      styles.aspectRatioTextSelected,
+                    styles.aspectRatioItem,
+                    aspectRatio === item.value && styles.aspectRatioItemSelected,
                   ]}
+                  onPress={() => setAspectRatio(item.value)}
                 >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <FontAwesome5
+                    name={item.icon as any}
+                    size={20}
+                    color={
+                      aspectRatio === item.value
+                        ? theme.white
+                        : theme.textSecondary
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.aspectRatioText,
+                      aspectRatio === item.value &&
+                        styles.aspectRatioTextSelected,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
 
-        {/* Generate Button */}
-        <TouchableOpacity
-          style={[
-            styles.generateButton,
-            isLoading && styles.generateButtonDisabled,
-          ]}
-          onPress={generateImage}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color={MainColor.white} />
-          ) : (
-            <FontAwesome5 name="magic" size={18} color={MainColor.white} />
+          {/* Generate Button */}
+          <TouchableOpacity
+            style={[
+              styles.generateButton,
+              isLoading && styles.generateButtonDisabled,
+            ]}
+            onPress={generateImage}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color={theme.white} />
+            ) : (
+              <FontAwesome5 name="magic" size={18} color={theme.white} />
+            )}
+            <Text style={styles.generateButtonText}>
+              {isLoading ? "Generating..." : "Generate Image"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Loading State */}
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.primary} />
+              <Text style={styles.loadingText}>Creating your masterpiece...</Text>
+            </View>
           )}
-          <Text style={styles.generateButtonText}>
-            {isLoading ? "Generating..." : "Generate Image"}
-          </Text>
-        </TouchableOpacity>
 
-        {/* Loading State */}
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={MainColor.primary} />
-            <Text style={styles.loadingText}>Creating your masterpiece...</Text>
-          </View>
-        )}
-
-        {/* Generated Image */}
-        {imageUrl && !isLoading && (
-          <View style={styles.imageSection}>
-            <Text style={styles.sectionTitle}>Your Creation</Text>
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUrl }} style={styles.image} />
+          {/* Generated Image */}
+          {imageUrl && !isLoading && (
+            <View style={styles.imageSection}>
+              <Text style={styles.sectionTitle}>Your Creation</Text>
+              <View style={styles.imageContainer}>
+                <Image source={{ uri: imageUrl }} style={styles.image} />
+              </View>
+              <View style={styles.imageActions}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleDownload}
+                >
+                  <FontAwesome5
+                    name="download"
+                    size={20}
+                    color={theme.primary}
+                  />
+                  <Text style={styles.actionButtonText}>Download</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleShare}
+                >
+                  <FontAwesome5
+                    name="share"
+                    size={20}
+                    color={theme.primary}
+                  />
+                  <Text style={styles.actionButtonText}>Share</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.imageActions}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleDownload}
-              >
-                <FontAwesome5
-                  name="download"
-                  size={20}
-                  color={MainColor.primary}
-                />
-                <Text style={styles.actionButtonText}>Download</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleShare}
-              >
-                <FontAwesome5
-                  name="share"
-                  size={20}
-                  color={MainColor.primary}
-                />
-                <Text style={styles.actionButtonText}>Share</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          )}
+        </View>
+      </ScrollView>
+    </Background>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: MainColor.background,
+    backgroundColor: theme.background,
   },
   content: {
     padding: 20,
@@ -485,16 +522,17 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 30,
+    // backgroundColor removed to allow gradient background to show through
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: MainColor.text,
+    color: theme.text,
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: MainColor.textSecondary,
+    color: theme.textSecondary,
     textAlign: "center",
   },
   section: {
@@ -503,71 +541,71 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: MainColor.text,
+    color: theme.text,
     marginBottom: 12,
   },
   promptContainer: {
     position: "relative",
   },
   inputField: {
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     padding: 20,
     borderRadius: 16,
-    borderColor: MainColor.primary,
+    borderColor: theme.primary,
     borderWidth: 1,
     fontSize: 16,
-    color: MainColor.text,
+    color: theme.text,
     textAlignVertical: "top",
     minHeight: 120,
   },
   ideaBtn: {
-    backgroundColor: MainColor.primary,
+    backgroundColor: theme.primary,
     padding: 12,
     borderRadius: 25,
     position: "absolute",
     bottom: 15,
     right: 15,
-    shadowColor: MainColor.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   dropdown: {
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     borderRadius: 12,
-    borderColor: MainColor.primary,
+    borderColor: theme.primary,
     borderWidth: 1,
     padding: 16,
   },
   placeholderStyle: {
     fontSize: 16,
-    color: MainColor.placeholder,
+    color: theme.placeholder,
   },
   selectedTextStyle: {
     fontSize: 16,
-    color: MainColor.text,
+    color: theme.text,
   },
   dropdownItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     padding: 12,
   },
   dropdownItemText: {
     fontSize: 16,
-    color: MainColor.text,
+    color: theme.text,
   },
   premiumBadge: {
-    backgroundColor: MainColor.accent,
+    backgroundColor: theme.accent,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
   },
   premiumText: {
     fontSize: 10,
-    color: MainColor.white,
+    color: theme.white,
     fontWeight: "600",
   },
   aspectRatioContainer: {
@@ -578,35 +616,35 @@ const styles = StyleSheet.create({
   aspectRatioItem: {
     flex: 1,
     minWidth: "45%",
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: MainColor.backgroundSecondary,
+    borderColor: theme.backgroundSecondary,
     alignItems: "center",
     gap: 8,
   },
   aspectRatioItemSelected: {
-    backgroundColor: MainColor.primary,
-    borderColor: MainColor.primary,
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   aspectRatioText: {
     fontSize: 12,
-    color: MainColor.textSecondary,
+    color: theme.textSecondary,
     textAlign: "center",
   },
   aspectRatioTextSelected: {
-    color: MainColor.white,
+    color: theme.white,
   },
   generateButton: {
-    backgroundColor: MainColor.primary,
+    backgroundColor: theme.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     padding: 18,
     borderRadius: 16,
     gap: 10,
-    shadowColor: MainColor.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -616,7 +654,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   generateButtonText: {
-    color: MainColor.white,
+    color: theme.white,
     fontSize: 18,
     fontWeight: "600",
   },
@@ -625,7 +663,7 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   loadingText: {
-    color: MainColor.textSecondary,
+    color: theme.textSecondary,
     fontSize: 16,
     marginTop: 16,
   },
@@ -636,8 +674,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: MainColor.primary,
-    shadowColor: MainColor.black,
+    borderColor: theme.primary,
+    shadowColor: theme.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -656,28 +694,28 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 25,
     gap: 8,
     borderWidth: 1,
-    borderColor: MainColor.primary,
+    borderColor: theme.primary,
   },
   actionButtonText: {
-    color: MainColor.primary,
+    color: theme.primary,
     fontSize: 14,
     fontWeight: "600",
   },
   testButton: {
-    backgroundColor: MainColor.warning,
+    backgroundColor: theme.warning,
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 10,
   },
   testButtonText: {
-    color: MainColor.black,
+    color: theme.black,
     fontWeight: "600",
   },
   footerSwitcher: {
@@ -690,25 +728,25 @@ const styles = StyleSheet.create({
   footerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 25,
     gap: 8,
     borderWidth: 1,
-    borderColor: MainColor.primary,
+    borderColor: theme.primary,
     marginHorizontal: 5,
   },
   footerButtonActive: {
-    backgroundColor: MainColor.primary,
+    backgroundColor: theme.primary,
   },
   footerButtonText: {
-    color: MainColor.primary,
+    color: theme.primary,
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
   },
   footerButtonTextActive: {
-    color: MainColor.white,
+    color: theme.white,
   },
 });

@@ -1,21 +1,23 @@
-import { MainColor } from "@/constants/MainColor";
+import { useTheme } from "@/app/_layout";
 import { AuthService } from "@/services/authService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-export default function Register() {
+export default function RegisterScreen() {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -126,7 +128,7 @@ export default function Register() {
               <FontAwesome5
                 name="user-plus"
                 size={32}
-                color={MainColor.primary}
+                color={theme.primary}
               />
             </View>
             <Text style={styles.title}>Create Account</Text>
@@ -140,13 +142,13 @@ export default function Register() {
               <FontAwesome5
                 name="envelope"
                 size={16}
-                color={MainColor.textSecondary}
+                color={theme.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor={MainColor.placeholder}
+                placeholderTextColor={theme.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -158,13 +160,13 @@ export default function Register() {
               <FontAwesome5
                 name="lock"
                 size={16}
-                color={MainColor.textSecondary}
+                color={theme.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={[styles.input, { paddingRight: 50 }]}
                 placeholder="Password"
-                placeholderTextColor={MainColor.placeholder}
+                placeholderTextColor={theme.placeholder}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -176,7 +178,7 @@ export default function Register() {
                 <FontAwesome5
                   name={showPassword ? "eye-slash" : "eye"}
                   size={16}
-                  color={MainColor.textSecondary}
+                  color={theme.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -185,13 +187,13 @@ export default function Register() {
               <FontAwesome5
                 name="lock"
                 size={16}
-                color={MainColor.textSecondary}
+                color={theme.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={[styles.input, { paddingRight: 50 }]}
                 placeholder="Confirm Password"
-                placeholderTextColor={MainColor.placeholder}
+                placeholderTextColor={theme.placeholder}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
@@ -203,7 +205,7 @@ export default function Register() {
                 <FontAwesome5
                   name={showConfirmPassword ? "eye-slash" : "eye"}
                   size={16}
-                  color={MainColor.textSecondary}
+                  color={theme.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -231,10 +233,10 @@ export default function Register() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: MainColor.background,
+    backgroundColor: theme.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -253,7 +255,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
@@ -261,12 +263,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: MainColor.text,
+    color: theme.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: MainColor.textSecondary,
+    color: theme.textSecondary,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -276,11 +278,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: MainColor.surface,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: MainColor.backgroundSecondary,
+    borderColor: theme.backgroundSecondary,
   },
   inputIcon: {
     marginLeft: 16,
@@ -289,7 +291,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 56,
-    color: MainColor.text,
+    color: theme.text,
     fontSize: 16,
     paddingRight: 16,
   },
@@ -299,7 +301,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   button: {
-    backgroundColor: MainColor.primary,
+    backgroundColor: theme.primary,
     height: 56,
     borderRadius: 12,
     justifyContent: "center",
@@ -310,7 +312,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: MainColor.white,
+    color: theme.white,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -321,11 +323,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    color: MainColor.textSecondary,
+    color: theme.textSecondary,
     fontSize: 14,
   },
   linkText: {
-    color: MainColor.primary,
+    color: theme.primary,
     fontSize: 14,
     fontWeight: "600",
   },

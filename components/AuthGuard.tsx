@@ -1,4 +1,4 @@
-import { MainColor } from "@/constants/MainColor";
+import { useTheme } from "@/app/_layout";
 import { AuthService } from "@/services/authService";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -9,6 +9,8 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -35,7 +37,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={MainColor.primary} />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -47,11 +49,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   return <>{children}</>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: MainColor.background,
+    backgroundColor: theme.background,
   },
 });
