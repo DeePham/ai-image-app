@@ -213,5 +213,50 @@ export const ImageService = {
       console.error("Error clearing image history:", error);
       throw error;
     }
+  },
+
+  // FAVORITE FUNCTIONS
+  async addFavorite(imageId: string): Promise<void> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error("User not authenticated");
+    const { error } = await supabase.from("favorite").insert({
+      user_id: user.id,
+      image_id: imageId
+    });
+    if (error) throw error;
+  },
+
+  async removeFavorite(imageId: string): Promise<void> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error("User not authenticated");
+    const { error } = await supabase.from("favorite")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("image_id", imageId);
+    if (error) throw error;
+  },
+
+  async getFavorites(): Promise<GeneratedImage[]> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error("User not authenticated");
+    // Join favorite and generated_images tables
+    const { data, error } = await supabase
+      .from("favorite")
+      .select(`image_id, generated_images(*)`)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    // Map to GeneratedImage[]
+    return (
+      data?.map((fav: any) => ({
+        id: fav.generated_images.id,
+        imageUrl: fav.generated_images.image_url,
+        prompt: fav.generated_images.prompt,
+        model: fav.generated_images.model,
+        aspectRatio: fav.generated_images.aspect_ratio,
+        createdAt: fav.generated_images.created_at,
+        userId: fav.generated_images.user_id,
+      })) || []
+    );
   }
 }

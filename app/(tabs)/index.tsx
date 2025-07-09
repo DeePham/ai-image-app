@@ -97,6 +97,7 @@ export default function Index() {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null);
+  // Remove unused state and logic related to image-to-image
 
   useEffect(() => {
     checkUser();
@@ -197,6 +198,12 @@ export default function Index() {
       });
     }
   };
+
+  // Helper to pick image and convert to base64
+  // Remove any unused imports (e.g., ImagePicker) if not used elsewhere
+
+  // Image-to-Image generation
+  // Remove any unused imports (e.g., ImagePicker) if not used elsewhere
 
   const downloadImageToFile = async (imageUrl: string): Promise<string> => {
     const response = await fetch(imageUrl);
@@ -315,16 +322,16 @@ export default function Index() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>AI Image Generator</Text>
           <Text style={styles.headerSubtitle}>
-            Transform your imagination into stunning visuals
+            Transform your imagination into stunning visuals. You can describe a scene, or even describe how you want to transform an image (e.g., &quot;A cat sitting on a red couch, but as a tiger&quot;).
           </Text>
         </View>
 
-        {/* Prompt Input */}
+        {/* Prompt Input (Encourage creative/transform prompts) */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Describe Your Vision</Text>
           <View style={styles.promptContainer}>
             <TextInput
-              placeholder="Describe your imagination in detail..."
+              placeholder="Describe your imagination or transformation in detail..."
               placeholderTextColor={MainColor.placeholder}
               style={styles.inputField}
               numberOfLines={4}
@@ -672,5 +679,36 @@ const styles = StyleSheet.create({
   testButtonText: {
     color: MainColor.black,
     fontWeight: "600",
+  },
+  footerSwitcher: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  footerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: MainColor.surface,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: MainColor.primary,
+    marginHorizontal: 5,
+  },
+  footerButtonActive: {
+    backgroundColor: MainColor.primary,
+  },
+  footerButtonText: {
+    color: MainColor.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  footerButtonTextActive: {
+    color: MainColor.white,
   },
 });

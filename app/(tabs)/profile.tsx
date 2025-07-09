@@ -1,6 +1,8 @@
 import { MainColor } from "@/constants/MainColor";
 import { AuthService } from "@/services/authService";
+import { ImageService } from "@/services/imageService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -18,6 +20,8 @@ export default function Profile() {
   const [isUploading, setIsUploading] = useState(false);
   const [showOldPw, setShowOldPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   const canChangePassword = 'changePassword' in (AuthService as any) && typeof (AuthService as any).changePassword === 'function';
 
@@ -29,6 +33,23 @@ export default function Profile() {
     };
     fetchUser();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchFavorites = async () => {
+        setLoadingFavorites(true);
+        try {
+          const favs = await ImageService.getFavorites();
+          setFavorites(favs);
+        } catch (e) {
+          setFavorites([]);
+        } finally {
+          setLoadingFavorites(false);
+        }
+      };
+      fetchFavorites();
+    }, [])
+  );
 
   const handleChangePassword = async () => {
     if (!oldPw || !newPw) {
@@ -196,6 +217,26 @@ export default function Profile() {
           </View>
         </View>
       </Modal>
+
+      {/* Favorites Gallery */}
+      <View style={{ marginTop: 32 }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: MainColor.text, marginBottom: 12 }}>My Favorites</Text>
+        {loadingFavorites ? (
+          <ActivityIndicator size="large" color={MainColor.primary} />
+        ) : favorites.length === 0 ? (
+          <Text style={{ color: MainColor.placeholder, textAlign: 'center' }}>No favorites yet</Text>
+        ) : (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-start' }}>
+            {favorites.map((img) => (
+              <Image
+                key={img.id}
+                source={{ uri: img.imageUrl }}
+                style={{ width: 100, height: 100, borderRadius: 10, margin: 5, borderWidth: 1, borderColor: MainColor.primary }}
+              />
+            ))}
+          </View>
+        )}
+      </View>
     </View>
   );
 }

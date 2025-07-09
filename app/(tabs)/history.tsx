@@ -1,6 +1,6 @@
 import { MainColor } from "@/constants/MainColor";
 import { GeneratedImage, ImageService } from "@/services/imageService";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from "@react-navigation/native";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
@@ -12,6 +12,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -25,12 +26,18 @@ const imageWidth = (windowWidth - 60) / 2;
 export default function History() {
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
 
   const loadImages = async () => {
     setLoading(true);
     try {
       const history = await ImageService.getHistory();
       setImages(history);
+      // Load favorites
+      const favs = await ImageService.getFavorites();
+      setFavoriteIds(favs.map(img => img.id));
     } catch (error) {
       console.error("Error loading images:", error);
     } finally {
@@ -104,6 +111,26 @@ export default function History() {
         }
       }
     });
+  };
+
+  const handleToggleFavorite = async (imageId: string) => {
+    try {
+      if (favoriteIds.includes(imageId)) {
+        await ImageService.removeFavorite(imageId);
+        setFavoriteIds(favoriteIds.filter(id => id !== imageId));
+      } else {
+        await ImageService.addFavorite(imageId);
+        setFavoriteIds([...favoriteIds, imageId]);
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to update favorite',
+        position: 'top',
+        visibilityTime: 4000
+      });
+    }
   };
 
   const downloadImageToFile = async (imageUrl: string): Promise<string> => {
@@ -194,41 +221,19 @@ export default function History() {
     }
   };
 
+  const openImageModal = (img: GeneratedImage) => {
+    setSelectedImage(img);
+    setModalVisible(true);
+  };
+  const closeImageModal = () => {
+    setModalVisible(false);
+    setSelectedImage(null);
+  };
+
   const renderImageItem = ({ item }: { item: GeneratedImage }) => (
-    <View style={styles.imageItem}>
+    <TouchableOpacity onPress={() => openImageModal(item)} style={styles.imageItem}>
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.downloadBtn]}
-          onPress={() => handleDownload(item.imageUrl)}
-        >
-          <FontAwesome5 name="download" size={16} color={MainColor.white} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.shareBtn]}
-          onPress={() => handleShare(item.imageUrl)}
-        >
-          <FontAwesome5 name="share" size={16} color={MainColor.white} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.deleteBtn]}
-          onPress={() => handleDeleteImage(item.id)}
-        >
-          <FontAwesome5 name="trash" size={16} color={MainColor.white} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.imageInfo}>
-        <Text style={styles.promptText} numberOfLines={2}>
-          {item.prompt}
-        </Text>
-        <Text style={styles.metaText}>
-          {item.model.split("/").pop()} • {item.aspectRatio}
-        </Text>
-        <Text style={styles.dateText}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-      </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -252,7 +257,7 @@ export default function History() {
 
       {images.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <FontAwesome5 name="image" size={64} color={MainColor.placeholder} />
+          <FontAwesome name="image" size={64} color={MainColor.placeholder} />
           <Text style={styles.emptyText}>No images generated yet</Text>
           <Text style={styles.emptySubText}>
             Generate your first AI image to see it here
@@ -268,6 +273,46 @@ export default function History() {
           showsVerticalScrollIndicator={false}
         />
       )}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeImageModal}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: MainColor.background, borderRadius: 16, padding: 20, alignItems: 'center', width: '85%' }}>
+            {selectedImage && (
+              <>
+                <Image source={{ uri: selectedImage.imageUrl }} style={{ width: 250, height: 250, borderRadius: 12, marginBottom: 16 }} />
+                <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
+                  <TouchableOpacity onPress={() => { handleToggleFavorite(selectedImage.id); }}>
+                    <FontAwesome
+                      name={favoriteIds.includes(selectedImage.id) ? "heart" : "heart-o"}
+                      size={28}
+                      color={favoriteIds.includes(selectedImage.id) ? "#ff4081" : MainColor.primary}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { handleDownload(selectedImage.imageUrl); }}>
+                    <FontAwesome name="download" size={28} color={MainColor.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { handleShare(selectedImage.imageUrl); }}>
+                    <FontAwesome name="share" size={28} color={MainColor.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { handleDeleteImage(selectedImage.id); closeImageModal(); }}>
+                    <FontAwesome name="trash" size={28} color={MainColor.primary} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={{ color: MainColor.text, fontSize: 14, marginBottom: 4 }}>{selectedImage.prompt}</Text>
+                <Text style={{ color: MainColor.placeholder, fontSize: 12 }}>{selectedImage.model.split("/").pop()} • {selectedImage.aspectRatio}</Text>
+                <Text style={{ color: MainColor.placeholder, fontSize: 12 }}>{new Date(selectedImage.createdAt).toLocaleDateString()}</Text>
+                <TouchableOpacity onPress={closeImageModal} style={{ marginTop: 18, padding: 10 }}>
+                  <Text style={{ color: MainColor.accent, fontWeight: 'bold', fontSize: 16 }}>Close</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
