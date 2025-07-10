@@ -1,6 +1,7 @@
 import { useTheme } from "@/app/_layout";
 import { AuthService } from "@/services/authService";
 import { ImageService } from "@/services/imageService";
+import { ocrImage } from "@/services/ocrService";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from "expo-image-picker";
@@ -23,6 +24,8 @@ export default function Profile() {
   const [showNewPw, setShowNewPw] = useState(false);
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [ocrResult, setOcrResult] = useState<string | null>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
 
   const canChangePassword = 'changePassword' in (AuthService as any) && typeof (AuthService as any).changePassword === 'function';
   const { theme, themeName, setThemeName } = useTheme();
@@ -121,6 +124,25 @@ export default function Profile() {
           console.log("Update error:", updateError);
         }
       }
+    }
+  };
+
+  const handlePickAndOcr = async () => {
+    const pickResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!pickResult.canceled && pickResult.assets && pickResult.assets[0].uri) {
+      setOcrLoading(true);
+      setOcrResult(null);
+      try {
+        const ocrRes = await ocrImage(pickResult.assets[0].uri);
+        setOcrResult(ocrRes.text);
+      } catch (e) {
+        setOcrResult("OCR failed");
+      }
+      setOcrLoading(false);
     }
   };
 
@@ -289,6 +311,22 @@ export default function Profile() {
                   style={{ width: 100, height: 100, borderRadius: 10, margin: 5, borderWidth: 1, borderColor: theme.primary }}
                 />
               ))}
+            </View>
+          )}
+        </View>
+
+        {/* OCR Section */}
+        <View style={{ marginTop: 32, width: '100%', alignItems: 'center' }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 12 }}>Image to Text (OCR)</Text>
+          <TouchableOpacity onPress={handlePickAndOcr} style={[styles.actionBtn, { marginBottom: 12 }]}>
+            <FontAwesome5 name="file-alt" size={18} color={theme.white} />
+            <Text style={[styles.actionText, { color: theme.white }]}>Chọn ảnh để nhận diện chữ</Text>
+          </TouchableOpacity>
+          {ocrLoading && <ActivityIndicator size="small" color={theme.primary} style={{ marginTop: 10 }} />}
+          {ocrResult && (
+            <View style={{ marginTop: 10, backgroundColor: theme.surface, borderRadius: 10, padding: 12, width: '90%' }}>
+              <Text style={{ color: theme.text, fontWeight: 'bold', marginBottom: 4 }}>Kết quả OCR:</Text>
+              <Text selectable style={{ color: theme.text }}>{ocrResult}</Text>
             </View>
           )}
         </View>
