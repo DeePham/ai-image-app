@@ -21,38 +21,39 @@ export type Theme = {
   gradient: string[];
 };
 
-export const lightTheme: Theme = {
+// Color Blind Friendly Themes - Dễ phân biệt cho người mù màu
+export const lightColorBlindTheme: Theme = {
   background: '#FFFFFF',
-  backgroundSecondary: '#F5F5F5',
-  surface: '#F0F0F0',
-  primary: '#007AFF',
-  accent: '#FF4081',
-  error: '#FF3B30',
-  warning: '#FFD600',
-  success: '#4CD964',
-  text: '#222222',
-  textSecondary: '#666666',
-  placeholder: '#B0B0B0',
+  backgroundSecondary: '#F8F9FA',
+  surface: '#E9ECEF',
+  primary: '#0077BB',    // Xanh dương đậm - dễ phân biệt
+  accent: '#EE7733',     // Cam - dễ phân biệt
+  error: '#DD4477',      // Hồng đậm - dễ phân biệt
+  warning: '#FFB347',    // Cam nhạt - dễ phân biệt
+  success: '#009988',    // Xanh lá đậm - dễ phân biệt
+  text: '#2C3E50',       // Xanh đen - dễ đọc
+  textSecondary: '#5D6D7E', // Xám đậm - dễ đọc
+  placeholder: '#85929E',   // Xám nhạt - dễ phân biệt
   black: '#000000',
   white: '#FFFFFF',
-  gradient: ['#FFFFFF', '#F5F5F5'],
+  gradient: ['#FFFFFF', '#F8F9FA'],
 };
 
-export const darkTheme: Theme = {
-  background: '#181A20',
-  backgroundSecondary: '#23262F',
-  surface: '#23262F',
-  primary: '#007AFF',
-  accent: '#FF4081',
-  error: '#FF3B30',
-  warning: '#FFD600',
-  success: '#4CD964',
+export const darkColorBlindTheme: Theme = {
+  background: '#1A1A1A',
+  backgroundSecondary: '#2D2D2D',
+  surface: '#404040',
+  primary: '#4A90E2',    // Xanh dương sáng - dễ phân biệt
+  accent: '#F39C12',     // Cam sáng - dễ phân biệt
+  error: '#E74C3C',      // Đỏ sáng - dễ phân biệt
+  warning: '#F1C40F',    // Vàng sáng - dễ phân biệt
+  success: '#27AE60',    // Xanh lá sáng - dễ phân biệt
   text: '#FFFFFF',
-  textSecondary: '#B0B0B0',
-  placeholder: '#666666',
+  textSecondary: '#BDC3C7', // Xám sáng - dễ đọc
+  placeholder: '#95A5A6',   // Xám nhạt - dễ phân biệt
   black: '#000000',
   white: '#FFFFFF',
-  gradient: ['#23262F', '#181A20'],
+  gradient: ['#1A1A1A', '#2D2D2D'],
 };
 
 export const specialTheme: Theme = {
@@ -72,19 +73,19 @@ export const specialTheme: Theme = {
   gradient: ['#0d47a1', '#1976d2', '#42a5f5', '#7b1fa2'], // deep blue to light blue to purple
 };
 
-export const themes: { [key in 'light' | 'dark' | 'special']: Theme } = {
-  light: lightTheme,
-  dark: darkTheme,
+export const themes: { [key in 'lightColorBlind' | 'darkColorBlind' | 'special']: Theme } = {
+  lightColorBlind: lightColorBlindTheme,
+  darkColorBlind: darkColorBlindTheme,
   special: specialTheme,
 };
 
 export const ThemeContext = createContext<{
   theme: Theme;
-  themeName: 'light' | 'dark' | 'special';
-  setThemeName: (name: 'light' | 'dark' | 'special') => void;
+  themeName: 'lightColorBlind' | 'darkColorBlind' | 'special';
+  setThemeName: (name: 'lightColorBlind' | 'darkColorBlind' | 'special') => void;
 }>({
-  theme: themes.dark,
-  themeName: 'dark',
+  theme: themes.darkColorBlind,
+  themeName: 'darkColorBlind',
   setThemeName: () => {},
 });
 
@@ -93,7 +94,7 @@ export function useTheme() {
 }
 
 export default function RootLayout() {
-  const [themeName, setThemeName] = useState<'light' | 'dark' | 'special'>('dark');
+  const [themeName, setThemeName] = useState<'lightColorBlind' | 'darkColorBlind' | 'special'>('darkColorBlind');
   const theme = themes[themeName];
 
   return (

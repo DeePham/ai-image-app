@@ -199,32 +199,32 @@ export default function Profile() {
         {/* Theme Selector */}
         <View style={{ marginTop: 24, marginBottom: 8, alignItems: 'center' }}>
           <Text style={{ color: theme.text, fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>Theme</Text>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
             <TouchableOpacity
               style={{
-                backgroundColor: themeName === 'light' ? '#EEE' : 'transparent',
+                backgroundColor: themeName === 'lightColorBlind' ? '#E8F4FD' : 'transparent',
                 borderRadius: 8,
                 paddingVertical: 8,
                 paddingHorizontal: 16,
                 borderWidth: 1,
-                borderColor: themeName === 'light' ? theme.primary : '#CCC',
+                borderColor: themeName === 'lightColorBlind' ? theme.primary : '#CCC',
               }}
-              onPress={() => setThemeName('light')}
+              onPress={() => setThemeName('lightColorBlind')}
             >
-              <Text style={{ color: themeName === 'light' ? theme.primary : '#666' }}>Light</Text>
+              <Text style={{ color: themeName === 'lightColorBlind' ? theme.primary : '#666' }}>Light CB</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={{
-                backgroundColor: themeName === 'dark' ? '#222' : 'transparent',
+                backgroundColor: themeName === 'darkColorBlind' ? '#2C3E50' : 'transparent',
                 borderRadius: 8,
                 paddingVertical: 8,
                 paddingHorizontal: 16,
                 borderWidth: 1,
-                borderColor: themeName === 'dark' ? theme.primary : '#CCC',
+                borderColor: themeName === 'darkColorBlind' ? theme.primary : '#CCC',
               }}
-              onPress={() => setThemeName('dark')}
+              onPress={() => setThemeName('darkColorBlind')}
             >
-              <Text style={{ color: themeName === 'dark' ? theme.primary : '#666' }}>Dark</Text>
+              <Text style={{ color: themeName === 'darkColorBlind' ? theme.primary : '#666' }}>Dark CB</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={{
@@ -240,6 +240,9 @@ export default function Profile() {
               <Text style={{ color: themeName === 'special' ? theme.accent : '#666' }}>Special</Text>
             </TouchableOpacity>
           </View>
+          <Text style={{ color: theme.placeholder, fontSize: 12, marginTop: 8, textAlign: 'center' }}>
+            CB = Color Blind Friendly
+          </Text>
         </View>
 
         {/* Modal đổi mật khẩu */}
